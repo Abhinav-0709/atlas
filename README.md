@@ -2,6 +2,8 @@
 
 Atlas is a backend-focused, durable, and recoverable distributed workflow execution engine built around DAG scheduling, state machines, lease-based distributed workers, and strict fault-tolerance.
 
+> 📖 **Developer Handover & Current State**: See [COMPLETION.md](COMPLETION.md) for full details on what has been built in Phase 1 and exact step-by-step instructions for Phase 2 through Phase 6.
+
 ---
 
 ## 🛠 Project Structure
