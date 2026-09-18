@@ -27,6 +27,12 @@ class TaskType(str, enum.Enum):
     DELAY = "DELAY"
 
 
+class BackoffStrategy(str, enum.Enum):
+    FIXED = "fixed"
+    LINEAR = "linear"
+    EXPONENTIAL = "exponential"
+
+
 class WorkerStatus(str, enum.Enum):
     ACTIVE = "ACTIVE"
     PAUSED = "PAUSED"

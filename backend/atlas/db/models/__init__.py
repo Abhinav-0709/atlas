@@ -1,5 +1,6 @@
 from atlas.db.base import Base
 from atlas.db.models.enums import (
+    BackoffStrategy,
     EventType,
     TaskStatus,
     TaskType,
@@ -30,6 +31,7 @@ __all__ = [
     "WorkflowStatus",
     "TaskStatus",
     "TaskType",
+    "BackoffStrategy",
     "WorkerStatus",
     "EventType",
 ]
