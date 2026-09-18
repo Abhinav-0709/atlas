@@ -1,20 +1,27 @@
 from contextlib import asynccontextmanager
 from typing import Any
+import asyncio
 import redis.asyncio as aioredis
 from fastapi import Depends, FastAPI, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from atlas import __version__
+from atlas.api.routers import workflows, runs, workers
 from atlas.config import settings
 from atlas.db.session import get_db
+from atlas.queue.client import get_redis_pool
+from atlas.scheduler.scheduler import scheduler_loop
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # App startup
+    redis = get_redis_pool()
+    app.state.redis = redis
+    scheduler_task = asyncio.create_task(scheduler_loop())
     yield
-    # App shutdown
+    scheduler_task.cancel()
+    await redis.aclose()
 
 
 app = FastAPI(
@@ -24,6 +31,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+app.include_router(workflows.router)
+app.include_router(runs.router)
+app.include_router(workers.router)
 
 
 @app.get("/")
