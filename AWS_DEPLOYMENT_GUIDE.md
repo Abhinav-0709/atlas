@@ -4,7 +4,8 @@ A step-by-step guide to deploying **Atlas** on Amazon Web Services (AWS), follow
 
 ```mermaid
 graph TD
-    Client["Client / API\n(Next.js App, SDK, CLI)"] --> ALB["Application Load Balancer (ALB)"]
+    Client["Client Browser"] --> Vercel["Vercel Global Edge Network\n(Next.js App Router Frontend)"]
+    Client --> ALB["Application Load Balancer (ALB)\n(AWS)"]
     ALB --> API["API Server\n(FastAPI / EC2)"]
     API --> DB[("DynamoDB / RDS\nExecution State")]
     API --> S3[("Amazon S3\nArtifacts & Logs")]
@@ -21,11 +22,13 @@ graph TD
 
 ## Architecture Overview
 
-| Component | AWS Service | Purpose in Atlas |
+Atlas adopts the modern, battle-tested hybrid cloud pattern: **Vercel for the Next.js Frontend** + **AWS for the Distributed Backend & Worker Fleet**.
+
+| Component | Platform / Service | Purpose in Atlas |
 | :--- | :--- | :--- |
+| **Frontend** | **Vercel (Global Edge)** | Hosting Next.js 14 App Router, static assets (`blocks.png`, `golf.png`), edge caching, and preview branches |
 | **Networking** | **Amazon VPC** | Isolated private network, public/private subnets, Security Groups |
 | **Security** | **AWS IAM** | Granular execution roles with least-privilege policies |
-| **Frontend** | **AWS Amplify / S3 + CloudFront** | Hosting the Next.js landing page & mission control UI |
 | **API Server** | **Amazon EC2 (or ECS Fargate)** | High-throughput FastAPI REST backend |
 | **Scheduler** | **Amazon EC2 / ECS** | Evaluates DAG dependencies and dispatches ready tasks |
 | **Message Queue**| **Amazon SQS** | Distributed FIFO/standard queue for tasks ready to be claimed |
@@ -278,33 +281,75 @@ sudo systemctl status atlas-api atlas-worker
 
 ---
 
-## Step 5: Frontend Deployment (Next.js)
+## Step 5: Frontend Deployment (Vercel & Next.js)
 
-### Option A: Deploy on AWS Amplify (Recommended)
-1. Open the **AWS Amplify Console**.
-2. Click **Create new app** → select **GitHub** repository.
-3. Select your `atlas` repo and set the app root directory to:
-   ```
-   frontend
-   ```
-4. Amplify will automatically detect Next.js App Router (SSR/SSG).
-5. In **Environment variables**, configure:
-   ```
-   NEXT_PUBLIC_API_URL=https://api.yourdomain.com
-   ```
-6. Click **Save and Deploy**. Your landing page and mission control dashboard are live with a global CDN and automatic SSL!
+### Option A: Deploy on Vercel (Strongly Recommended)
+Vercel is built by the creators of Next.js and provides zero-config support for Next.js 14 App Router, dynamic server rendering, image optimization (`next/image`), and edge CDN caching.
 
-### Option B: Deploy on EC2 via PM2 / Docker
-On your EC2 instance:
+#### 1. Import Repository into Vercel
+1. Log in to [Vercel](https://vercel.com) with your GitHub account.
+2. Click **Add New...** → **Project**.
+3. Locate and select your `atlas` repository (`Abhinav-0709/atlas`).
+
+#### 2. Configure Project Settings
+- **Framework Preset**: `Next.js` (automatically detected).
+- **Root Directory**: Click **Edit** and choose `frontend`.
+- **Build Command**: `npm run build` (default).
+- **Output Directory**: `.next` (default).
+- **Install Command**: `npm install` (default).
+
+#### 3. Set Environment Variables
+In the **Environment Variables** section, add:
+| Key | Value | Description |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_API_URL` | `http://<YOUR_AWS_EC2_PUBLIC_IP_OR_ALB>:8000` | Points UI queries to your FastAPI backend on AWS |
+
+#### 4. Deploy
+1. Click **Deploy**.
+2. Within 60 seconds, Vercel will build and assign you a production URL (e.g., `https://atlas-engine.vercel.app`).
+3. Every subsequent `git push` to `main` will automatically trigger a new deployment, while pull requests generate isolated preview URLs!
+
+---
+
+### Option B: Deploy on AWS Amplify
+If your organization requires keeping 100% of resources within AWS:
+1. Open **AWS Amplify Console** → **Create new app** → select **GitHub**.
+2. Select repository and set App root to `frontend`.
+3. In **Environment variables**, set `NEXT_PUBLIC_API_URL=https://api.yourdomain.com`.
+4. Click **Save and Deploy**.
+
+---
+
+### Option C: Self-Host on EC2 via PM2
+If hosting frontend directly alongside the backend on your EC2 instance:
 ```bash
 cd /home/ubuntu/atlas/frontend
 npm install
 npm run build
-npm install -g pm2
+sudo npm install -g pm2
 pm2 start npm --name "atlas-frontend" -- start -- -p 3000
 pm2 save
 pm2 startup
 ```
+
+---
+
+### Cross-Origin Setup (Connecting Vercel to AWS Backend)
+
+To allow the frontend on Vercel to query your FastAPI server on AWS without browser CORS errors:
+
+1. **Verify Backend CORS** (Already implemented in `backend/atlas/main.py`):
+   ```python
+   app.add_middleware(
+       CORSMiddleware,
+       allow_origins=["*"],  # Or set to ["https://your-atlas.vercel.app"]
+       allow_credentials=True,
+       allow_methods=["*"],
+       allow_headers=["*"],
+   )
+   ```
+2. **AWS Security Group**:
+   Ensure the EC2 Security Group (`atlas-backend-sg`) allows inbound TCP traffic on port `8000` (or `443` if behind ALB) from `0.0.0.0/0`.
 
 ---
 
