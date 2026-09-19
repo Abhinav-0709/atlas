@@ -1,6 +1,6 @@
 # Atlas — Project State & Handover Guide (COMPLETION.md)
 
-> **Current Status**: **Phase 4 Complete (Distributed Workers & Leases)**. Ready for **Phase 5 (Retries, Crash Recovery & Idempotency)**.  
+> **Current Status**: **Phase 5 Complete (Retries, Crash Recovery & Idempotency)**. Ready for **Phase 6 (Observability, Dashboard & Containerization)**.  
 > **Target Audience**: Any engineer joining the Atlas codebase to continue implementation seamlessly.  
 > **Key References**: [docs/IDEA.md](docs/IDEA.md), [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md), [docs/CONSTRAINTS.md](docs/CONSTRAINTS.md), [docs/AGENT(2).md](docs/AGENT(2).md).
 
@@ -10,11 +10,12 @@
 
 Atlas is a backend-heavy, distributed workflow execution engine. It is designed to orchestrate workflows represented as Directed Acyclic Graphs (DAGs) across disposable, distributed workers with lease-based recovery, explicit state machines, and durable state persistence.
 
-All **Phases 1 through 4** are now implemented, code-reviewed, and verified:
+All **Phases 1 through 5** are now implemented, code-reviewed, and verified:
 1. **Phase 1 (Foundation & Database)**: uv package manager, 9 SQLAlchemy models, async session, Alembic migrations.
 2. **Phase 2 (DAG Engine & State Machine)**: Pydantic DAG definitions, DFS 3-color cycle detection, dependency resolution, centralized explicit state transitions, controlled task handlers (`HTTP`, `PYTHON_FUNCTION`, `DELAY`).
 3. **Phase 3 (REST API & Redis Queue)**: Complete FastAPI routes for workflows, runs, and workers; Redis async task queue; background scheduler loop; lease reaper loop.
 4. **Phase 4 (Distributed Workers & Leasing)**: Standalone worker daemon, atomic task claiming (`UPDATE ... WHERE status='READY'`), heartbeat context renewing leases and worker liveness, task outcome persistence, and terminal workflow detection.
+5. **Phase 5 (Retries, Crash Recovery & Idempotency)**: Configurable retry policies (fixed, linear, exponential with jitter), retry scheduler (`RETRYING` vs `DEAD_LETTERED`), on-boot startup crash recovery scan for orphaned tasks and dead workers, and workflow run idempotency key enforcement.
 
 ---
 
@@ -175,26 +176,33 @@ Phase 4 deliverables are fully built and verified:
 
 ---
 
-## 5. Next: Phase 5 (Retries, Crash Recovery & Idempotency)
-
----
-
-### Phase 5: Retries, Crash Recovery & Idempotency
-**Goal**: Handle process crashes, service restarts, and duplicate task executions gracefully.
-
-#### What to Build:
+## 5. Phase 5 Completed: Retries, Crash Recovery & Idempotency
+ 
+Phase 5 deliverables are fully built and verified:
 1. **Retry Engine (`backend/atlas/execution/retry_policy.py`)**:
-   - Read task retry policy (`max_attempts`, `backoff_strategy`, `initial_delay`, `max_delay`, `jitter`).
-   - Exponential backoff formula with random jitter.
-   - When attempts exceed `max_attempts`, transition task to `DEAD_LETTERED`.
-2. **Startup Recovery (`backend/atlas/recovery/startup_recovery.py`)**:
-   - On API/scheduler boot, query all unfinished `workflow_runs` and reconcile their active tasks against live workers.
-   - Clean up abandoned tasks deterministically.
-3. **Idempotency**:
-   - Honor `idempotency_key` on `workflow_runs` to return existing runs on duplicate submissions.
-   - Ensure workers handle duplicate task deliveries safely.
+   - `compute_backoff_delay`: supports `FIXED`, `LINEAR`, and `EXPONENTIAL` backoff with random jitter (`jitter_factor = 0.2`) bounded by `max_delay`.
+   - `should_retry`: enforces attempt thresholds (`current_attempt < max_attempts`).
+   - Supports deterministic custom jitter functions for test reproducibility.
+2. **Failure Handler & Dead Lettering (`backend/atlas/execution/retry_scheduler.py`)**:
+   - `handle_task_failure`: updates `TaskAttempt` (capturing error type, message, completed time), writes `TASK_FAILED` event.
+   - If attempts remain: transitions `TaskRun` to `RETRYING`, computes `scheduled_retry_at`, clears worker lease, writes `TASK_RETRY_SCHEDULED` event.
+   - If attempts exhausted: transitions `TaskRun` to `DEAD_LETTERED`, writes `TASK_DEAD_LETTERED` event, triggering workflow terminal `FAILED` state.
+3. **Startup Crash Recovery Engine (`backend/atlas/recovery/startup_recovery.py`)**:
+   - Runs automatically on engine/API startup in `lifespan`.
+   - Step 1: Detects active workers whose heartbeats are older than cutoff (60s), marks them `DEAD`, writes `WORKER_HEARTBEAT_TIMEOUT` event.
+   - Step 2: Identifies `RUNNING` tasks with expired leases or dead workers, resets their status to `READY`, clears leases, writes `TASK_LEASE_EXPIRED` event.
+   - Step 3: Reconciles active workflow runs. Idempotent and deterministic across successive runs.
+4. **Scheduler Integration (`backend/atlas/scheduler/scheduler.py`)**:
+   - Scheduler loop evaluates `RETRYING` tasks: once `scheduled_retry_at <= now()`, transitions them `RETRYING -> READY`, clears retry timestamp, and enqueues to Redis.
+5. **Idempotency Enforcement (`backend/atlas/api/routers/workflows.py`)**:
+   - Submitting workflow runs with the same `idempotency_key` returns the existing `RunResponse` idempotently without duplicate runs.
+6. **Comprehensive Test Suite (`backend/tests/test_retries_and_recovery.py`)**:
+   - 13 new unit tests covering backoff calculations, threshold logic, failure transitions, dead-letter transitions, timeout handling, startup crash recovery, idempotency key responses, and worker failure integration.
+   - Full suite passes: `69 passed, 14 skipped in 30.79s`, pyright `0 errors`.
 
 ---
+
+## 6. Next: Phase 6 (Observability, Dashboard & Containerization)
 
 ### Phase 6: Observability, Dashboard & Containerization
 **Goal**: Expose production metrics, build the operator UI, and package the entire distributed system.

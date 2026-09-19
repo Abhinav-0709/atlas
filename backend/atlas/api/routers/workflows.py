@@ -149,14 +149,12 @@ async def start_workflow_run(
         )
 
     if run_in.idempotency_key:
-        existing_run = await db.execute(
+        existing_run_res = await db.execute(
             select(WorkflowRun).where(WorkflowRun.idempotency_key == run_in.idempotency_key)
         )
-        if existing_run.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Run with idempotency key '{run_in.idempotency_key}' already exists",
-            )
+        existing_run = existing_run_res.scalar_one_or_none()
+        if existing_run:
+            return RunResponse.model_validate(existing_run)
 
     workflow_run = WorkflowRun(
         workflow_version_id=workflow_version.id,

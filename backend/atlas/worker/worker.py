@@ -11,6 +11,7 @@ from atlas.db.models.enums import EventType, TaskStatus, TaskType, WorkerStatus
 from atlas.db.session import get_db_context
 from atlas.exceptions import TaskTimeoutError
 from atlas.execution.executor import execute_task
+from atlas.execution.retry_scheduler import handle_task_failure
 from atlas.queue.task_queue import dequeue_task
 from atlas.worker.claimer import claim_task
 from atlas.worker.heartbeat import HeartbeatManager
@@ -222,55 +223,16 @@ class AtlasWorker:
         task_key: str,
         exc: Exception,
     ) -> None:
-        now = datetime.now(timezone.utc)
-        status_value = (
-            TaskStatus.TIMED_OUT.value
-            if isinstance(exc, TaskTimeoutError)
-            else TaskStatus.FAILED.value
-        )
-
         async with get_db_context() as db:
-            # 1. Update TaskRun
-            await db.execute(
-                update(TaskRun)
-                .where(TaskRun.id == task_run_id)
-                .values(
-                    status=status_value,
-                    error_message=str(exc),
-                    lease_expires_at=None,
-                    completed_at=now,
-                )
-            )
-
-            # 2. Update TaskAttempt
-            await db.execute(
-                update(TaskAttempt)
-                .where(
-                    TaskAttempt.task_run_id == task_run_id,
-                    TaskAttempt.attempt_number == attempt_number,
-                )
-                .values(
-                    status=status_value,
-                    error_type=type(exc).__name__,
-                    error_message=str(exc),
-                    completed_at=now,
-                )
-            )
-
-            # 3. Create Event
-            event = Event(
-                workflow_run_id=workflow_run_id,
+            await handle_task_failure(
+                db=db,
                 task_run_id=task_run_id,
+                workflow_run_id=workflow_run_id,
+                attempt_number=attempt_number,
+                task_key=task_key,
+                exc=exc,
                 worker_id=self.worker_id,
-                event_type=EventType.TASK_FAILED.value,
-                payload={
-                    "task_key": task_key,
-                    "error_type": type(exc).__name__,
-                    "error_message": str(exc),
-                },
-                created_at=now,
             )
-            db.add(event)
 
     async def run(self) -> None:
         """Main polling and execution loop."""

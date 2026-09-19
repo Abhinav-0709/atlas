@@ -33,6 +33,7 @@ class TaskRunResponse(BaseModel):
     task_key: str
     status: str
     worker_id: uuid.UUID | None = None
+    scheduled_retry_at: datetime | None = None
     current_attempt: int = 0
     attempt_count: int = Field(default=0, validation_alias="current_attempt")
     started_at: datetime | None = None

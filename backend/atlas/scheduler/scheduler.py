@@ -40,6 +40,26 @@ async def find_ready_tasks():
             task_configs = {t.task_key: t.configuration for t in tasks}
             task_timeouts = {t.task_key: t.timeout_seconds for t in tasks}
 
+            now = datetime.now(timezone.utc)
+
+            # Check if any RETRYING tasks are ready to be retried
+            for task_run in task_runs:
+                if task_run.status == TaskStatus.RETRYING.value:
+                    if task_run.scheduled_retry_at is None or task_run.scheduled_retry_at <= now:
+                        task_run.status = transition_task(TaskStatus.RETRYING, TaskStatus.READY).value
+                        task_run.scheduled_retry_at = None
+                        task_run.updated_at = now
+                        await db.flush()
+
+                        await enqueue_task(
+                            workflow_run_id=workflow_run.id,
+                            task_run_id=task_run.id,
+                            task_key=task_run.task_key,
+                            configuration=task_configs.get(task_run.task_key, {}),
+                            timeout_seconds=task_timeouts.get(task_run.task_key, 300),
+                        )
+
+            # Re-read states
             states = {tr.task_key: TaskStatus(tr.status) for tr in task_runs}
 
             dag = DAGDefinition(**version.definition)
@@ -52,8 +72,8 @@ async def find_ready_tasks():
                     workflow_run.status = transition_workflow(
                         WorkflowStatus(workflow_run.status), wf_status
                     ).value
-                    workflow_run.completed_at = datetime.now(timezone.utc)
-                    workflow_run.updated_at = datetime.now(timezone.utc)
+                    workflow_run.completed_at = now
+                    workflow_run.updated_at = now
                     await db.commit()
                     continue
             except Exception:
@@ -76,7 +96,7 @@ async def find_ready_tasks():
                     continue
 
                 task_run.status = transition_task(TaskStatus.PENDING, TaskStatus.READY).value
-                task_run.updated_at = datetime.now(timezone.utc)
+                task_run.updated_at = now
                 await db.flush()
 
                 await enqueue_task(
@@ -86,7 +106,7 @@ async def find_ready_tasks():
                     configuration=task_configs.get(task_key, {}),
                     timeout_seconds=task_timeouts.get(task_key, 300),
                 )
-                await db.commit()
+            await db.commit()
 
 
 async def scheduler_loop():

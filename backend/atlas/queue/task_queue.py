@@ -22,7 +22,7 @@ async def enqueue_task(
     configuration: dict[str, Any],
     timeout_seconds: int = 300,
 ) -> None:
-    redis = get_redis_pool()
+    redis: Any = get_redis_pool()
     task_data = {
         "workflow_run_id": str(workflow_run_id),
         "task_run_id": str(task_run_id),
@@ -34,9 +34,9 @@ async def enqueue_task(
 
 
 async def dequeue_task(block: bool = True, timeout: int = 5) -> dict[str, Any] | None:
-    redis = get_redis_pool()
+    redis: Any = get_redis_pool()
     if block:
-        result = await redis.blpop(TASK_QUEUE_NAME, timeout=timeout)
+        result = await redis.blpop([TASK_QUEUE_NAME], timeout=timeout)
         if result is None:
             return None
         _, task_json = result
@@ -44,15 +44,15 @@ async def dequeue_task(block: bool = True, timeout: int = 5) -> dict[str, Any] |
         task_json = await redis.lpop(TASK_QUEUE_NAME)
         if task_json is None:
             return None
-    
-    return deserialize_task(task_json)
+
+    return deserialize_task(str(task_json))
 
 
 async def get_queue_depth() -> int:
-    redis = get_redis_pool()
-    return await redis.llen(TASK_QUEUE_NAME)
+    redis: Any = get_redis_pool()
+    return int(await redis.llen(TASK_QUEUE_NAME))
 
 
 async def clear_queue() -> None:
-    redis = get_redis_pool()
+    redis: Any = get_redis_pool()
     await redis.delete(TASK_QUEUE_NAME)

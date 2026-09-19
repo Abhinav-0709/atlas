@@ -30,11 +30,9 @@ def build_task(definition: TaskDefinition) -> BaseTask:
 async def execute_task(definition: TaskDefinition) -> dict[str, Any]:
     task = build_task(definition)
     try:
-        async with asyncio.timeout(definition.timeout_seconds) as timeout:
+        async with asyncio.timeout(definition.timeout_seconds):
             return await task.execute()
     except TimeoutError as exc:
-        if timeout.expired():
-            raise TaskTimeoutError(
-                definition.key, definition.timeout_seconds
-            ) from exc
-        raise
+        raise TaskTimeoutError(
+            definition.key, definition.timeout_seconds
+        ) from exc

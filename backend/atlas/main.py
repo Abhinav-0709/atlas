@@ -15,8 +15,21 @@ from atlas.scheduler.lease_reaper import lease_reaper_loop
 from atlas.scheduler.scheduler import scheduler_loop
 
 
+import logging
+from atlas.recovery.startup_recovery import run_startup_recovery
+
+logger = logging.getLogger("atlas.main")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Run startup recovery to reclaim orphaned tasks and dead workers
+    try:
+        recovery_stats = await run_startup_recovery()
+        logger.info(f"Startup crash recovery completed: {recovery_stats}")
+    except Exception as exc:
+        logger.warning(f"Startup crash recovery warning: {exc}")
+
     redis = get_redis_pool()
     app.state.redis = redis
     scheduler_task = asyncio.create_task(scheduler_loop())
@@ -53,7 +66,7 @@ async def root() -> dict[str, str]:
 @app.get("/health")
 async def health_check(
     db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
+) -> JSONResponse:
     health_status: dict[str, Any] = {
         "status": "healthy",
         "database": "unknown",

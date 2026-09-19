@@ -20,6 +20,7 @@ class TaskRun(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         Index("ix_task_runs_run_status", "workflow_run_id", "status"),
         Index("ix_task_runs_status_lease", "status", "lease_expires_at"),
+        Index("ix_task_runs_status_retry", "status", "scheduled_retry_at"),
     )
 
     workflow_run_id: Mapped[uuid.UUID] = mapped_column(
@@ -47,6 +48,10 @@ class TaskRun(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
     lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    scheduled_retry_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
