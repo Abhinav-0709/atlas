@@ -11,6 +11,7 @@ from atlas.api.routers import workflows, runs, workers
 from atlas.config import settings
 from atlas.db.session import get_db
 from atlas.queue.client import get_redis_pool
+from atlas.scheduler.lease_reaper import lease_reaper_loop
 from atlas.scheduler.scheduler import scheduler_loop
 
 
@@ -19,8 +20,10 @@ async def lifespan(app: FastAPI):
     redis = get_redis_pool()
     app.state.redis = redis
     scheduler_task = asyncio.create_task(scheduler_loop())
+    reaper_task = asyncio.create_task(lease_reaper_loop())
     yield
     scheduler_task.cancel()
+    reaper_task.cancel()
     await redis.aclose()
 
 

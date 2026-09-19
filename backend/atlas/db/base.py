@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, declarative_mixin, mapped_column
 
 
 def utc_now() -> datetime:
@@ -14,6 +14,7 @@ class Base(DeclarativeBase):
     pass
 
 
+@declarative_mixin
 class UUIDPrimaryKeyMixin:
     """Mixin for UUID primary key."""
     id: Mapped[uuid.UUID] = mapped_column(
@@ -24,6 +25,7 @@ class UUIDPrimaryKeyMixin:
     )
 
 
+@declarative_mixin
 class TimestampMixin:
     """Mixin providing created_at and updated_at UTC timestamps."""
     created_at: Mapped[datetime] = mapped_column(

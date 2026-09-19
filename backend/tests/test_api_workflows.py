@@ -5,6 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from atlas.main import app
 from atlas.db.session import AsyncSessionLocal
+from atlas.config import settings
 
 
 @pytest_asyncio.fixture
@@ -15,6 +16,12 @@ async def client():
 
 @pytest_asyncio.fixture
 async def clean_db():
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+    except Exception:
+        pytest.skip(f"Database is not accessible on {settings.DATABASE_URL}")
+
     async with AsyncSessionLocal() as session:
         await session.execute(text("DELETE FROM task_runs"))
         await session.execute(text("DELETE FROM workflow_runs"))

@@ -5,7 +5,7 @@ _TASK_TRANSITIONS: dict[TaskStatus, frozenset[TaskStatus]] = {
     TaskStatus.PENDING: frozenset({TaskStatus.READY}),
     TaskStatus.READY: frozenset({TaskStatus.RUNNING}),
     TaskStatus.RUNNING: frozenset(
-        {TaskStatus.SUCCESS, TaskStatus.FAILED, TaskStatus.TIMED_OUT}
+        {TaskStatus.SUCCESS, TaskStatus.FAILED, TaskStatus.TIMED_OUT, TaskStatus.READY}
     ),
     TaskStatus.FAILED: frozenset({TaskStatus.RETRYING, TaskStatus.DEAD_LETTERED}),
     TaskStatus.RETRYING: frozenset({TaskStatus.READY}),

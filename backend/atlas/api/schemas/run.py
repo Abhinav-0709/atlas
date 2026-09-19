@@ -32,10 +32,11 @@ class TaskRunResponse(BaseModel):
     workflow_run_id: uuid.UUID
     task_key: str
     status: str
-    worker_id: uuid.UUID | None
-    attempt_count: int
-    started_at: datetime | None
-    completed_at: datetime | None
+    worker_id: uuid.UUID | None = None
+    current_attempt: int = 0
+    attempt_count: int = Field(default=0, validation_alias="current_attempt")
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     created_at: datetime
 
 
@@ -43,11 +44,12 @@ class EventResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    workflow_run_id: uuid.UUID
+    workflow_run_id: uuid.UUID | None = None
+    task_run_id: uuid.UUID | None = None
     event_type: str
-    task_key: str | None
-    worker_id: uuid.UUID | None
-    payload: dict[str, Any]
+    task_key: str | None = None
+    worker_id: uuid.UUID | None = None
+    payload: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
 
 

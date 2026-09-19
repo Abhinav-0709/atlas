@@ -32,6 +32,11 @@ class TestTaskTransitions:
     def test_running_to_timed_out(self):
         assert can_transition_task(TaskStatus.RUNNING, TaskStatus.TIMED_OUT)
 
+    def test_running_to_ready_lease_recovery(self):
+        assert can_transition_task(TaskStatus.RUNNING, TaskStatus.READY)
+        result = transition_task(TaskStatus.RUNNING, TaskStatus.READY)
+        assert result == TaskStatus.READY
+
     def test_failed_to_retrying(self):
         assert can_transition_task(TaskStatus.FAILED, TaskStatus.RETRYING)
 

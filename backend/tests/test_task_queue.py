@@ -17,10 +17,22 @@ async def redis_client():
 
 
 @pytest.fixture(autouse=True)
-async def clean_queue(redis_client):
+async def clean_queue(redis_client, request):
+    # Don't require redis connection for pure serialization tests
+    if "serialize" in request.node.name:
+        yield
+        return
+
+    try:
+        await redis_client.ping()
+    except Exception:
+        pytest.skip(f"Redis is not running on {settings.REDIS_URL}")
     await redis_client.delete(TASK_QUEUE_NAME)
     yield
-    await redis_client.delete(TASK_QUEUE_NAME)
+    try:
+        await redis_client.delete(TASK_QUEUE_NAME)
+    except Exception:
+        pass
 
 
 @pytest.mark.asyncio

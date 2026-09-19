@@ -37,13 +37,27 @@ async def find_ready_tasks():
             )
             tasks = task_result.scalars().all()
 
-            task_configs = {t.key: t.configuration for t in tasks}
-            task_timeouts = {t.key: t.timeout_seconds for t in tasks}
+            task_configs = {t.task_key: t.configuration for t in tasks}
+            task_timeouts = {t.task_key: t.timeout_seconds for t in tasks}
 
             states = {tr.task_key: TaskStatus(tr.status) for tr in task_runs}
 
             dag = DAGDefinition(**version.definition)
             engine = WorkflowEngine(dag)
+
+            # Check if workflow reached a terminal state
+            try:
+                wf_status = engine.compute_workflow_status(states)
+                if wf_status != WorkflowStatus.RUNNING:
+                    workflow_run.status = transition_workflow(
+                        WorkflowStatus(workflow_run.status), wf_status
+                    ).value
+                    workflow_run.completed_at = datetime.now(timezone.utc)
+                    workflow_run.updated_at = datetime.now(timezone.utc)
+                    await db.commit()
+                    continue
+            except Exception:
+                pass
 
             try:
                 ready_keys = engine.get_ready_tasks(states)
