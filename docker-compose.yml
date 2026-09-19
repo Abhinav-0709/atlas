@@ -1,0 +1,47 @@
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: atlas_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../backend/.env
+    volumes:
+      - ../frontend:/frontend:ro
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: infra-worker
+    command: ["python", "-m", "atlas.worker.main"]
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
+    depends_on:
+      api:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: atlas_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  prometheus_data:

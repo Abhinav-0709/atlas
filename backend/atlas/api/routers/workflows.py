@@ -201,3 +201,37 @@ async def start_workflow_run(
     await db.refresh(workflow_run)
 
     return RunResponse.model_validate(workflow_run)
+
+@router.get("/{workflow_id}/runs", response_model=list[RunResponse])
+async def list_workflow_runs(
+    workflow_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+) -> list[RunResponse]:
+    workflow_result = await db.execute(
+        select(Workflow).where(Workflow.id == workflow_id)
+    )
+    if not workflow_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workflow {workflow_id} not found",
+        )
+
+    versions_result = await db.execute(
+        select(WorkflowVersion.id).where(WorkflowVersion.workflow_id == workflow_id)
+    )
+    version_ids = [row for row in versions_result.scalars().all()]
+    
+    if not version_ids:
+        return []
+
+    runs_result = await db.execute(
+        select(WorkflowRun)
+        .where(WorkflowRun.workflow_version_id.in_(version_ids))
+        .order_by(WorkflowRun.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    runs = runs_result.scalars().all()
+    return [RunResponse.model_validate(r) for r in runs]
