@@ -5,6 +5,10 @@ import signal
 import sys
 from atlas.worker.worker import AtlasWorker
 
+# Populates the task-function registry (@register_function) before any task
+
+import atlas.tasks.builtin_functions  # noqa: F401,E402
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
