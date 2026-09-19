@@ -55,11 +55,21 @@ app = FastAPI(
 app.add_middleware(CorrelationIdMiddleware)
 
 from pathlib import Path
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
-if frontend_dir.exists():
-    app.mount("/dashboard", StaticFiles(directory=str(frontend_dir), html=True), name="dashboard")
+legacy_dir = frontend_dir / "legacy"
+if legacy_dir.exists():
+    app.mount("/legacy", StaticFiles(directory=str(legacy_dir), html=True), name="legacy_dashboard")
 
 app.include_router(workflows.router)
 app.include_router(runs.router)
