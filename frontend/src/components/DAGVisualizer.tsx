@@ -25,8 +25,8 @@ export default function DAGVisualizer({
   }
 
   return (
-    <div className="w-full overflow-x-auto p-4">
-      <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 min-w-[500px]">
+    <div className="w-full overflow-x-auto terminal-scrollbar p-2 sm:p-4">
+      <div className="flex items-center gap-4 sm:gap-6 min-w-max py-2 px-1">
         {tasks.map((task, idx) => {
           const isSelected = selectedTaskKey === task.task_key;
           const isRunning = task.status === "RUNNING";

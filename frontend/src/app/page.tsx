@@ -6,8 +6,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import WhyAtlasSection from "@/components/landing/WhyAtlasSection";
 import UseCasesSection from "@/components/landing/UseCasesSection";
 import ArchitectureSection from "@/components/landing/ArchitectureSection";
-import ResultsSection from "@/components/landing/ResultsSection";
-import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import QuickstartSection from "@/components/landing/QuickstartSection";
 import CtaBanner from "@/components/landing/CtaBanner";
 import Footer from "@/components/landing/Footer";
 
@@ -20,25 +19,22 @@ export default function LandingPage() {
       {/* 2. Hero: Sky Blue & Acid Lime Split with Blocks & Typography */}
       <HeroSection />
 
-      {/* 3. Why Atlas: More Than a Job Queue (2x3 Feature Bento) */}
+      {/* 3. Features: More Than a Job Queue (2x3 Feature Bento) */}
       <WhyAtlasSection />
 
-      {/* 4. Use Cases: Dark Section with Golf Ball Showcase */}
+      {/* 4. Use Cases: Dark Section with Precision Showcase */}
       <UseCasesSection />
 
-      {/* 5. Architecture: Built on AWS, Diagram & 3D Cloud */}
+      {/* 5. Architecture: Distributed Architecture & Engine Flow */}
       <ArchitectureSection />
 
-      {/* 6. Results: 10x, 99.9%, ∞ Metrics + Panoramic Fairway Banner */}
-      <ResultsSection />
+      {/* 6. Developer Workflow: Code Terminal & Quickstart */}
+      <QuickstartSection />
 
-      {/* 7. Testimonials: Loved by Builders Carousel */}
-      <TestimonialsSection />
-
-      {/* 8. CTA Banner: 3-Segment Capsule Ready to Build */}
+      {/* 7. CTA Banner: 3-Segment Capsule Ready to Build */}
       <CtaBanner />
 
-      {/* 9. Footer: Logo, Links & Socials */}
+      {/* 8. Footer: Brand, Clean Links & Socials */}
       <Footer />
     </main>
   );

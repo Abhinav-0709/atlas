@@ -31,9 +31,9 @@ export default function WorkersPage() {
   return (
     <div className="space-y-8">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black uppercase tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight">
             Worker Fleet Monitoring
           </h1>
           <p className="font-mono text-xs text-black/60 uppercase tracking-wider mt-1">
@@ -44,7 +44,7 @@ export default function WorkersPage() {
         <button
           onClick={loadWorkers}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-black/20 bg-white font-mono text-xs uppercase font-bold hover:bg-black/5 transition-all"
+          className="flex items-center gap-2 px-4 py-2 sm:py-2.5 rounded-full border-2 border-black/20 bg-white font-mono text-xs uppercase font-bold hover:bg-black/5 transition-all self-start sm:self-auto"
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           <span>Refresh Fleet</span>
@@ -52,13 +52,13 @@ export default function WorkersPage() {
       </div>
 
       {/* Stats Summary Bento */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-atlas-black text-white rounded-3xl p-6 border border-white/10 shadow-md">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-atlas-black text-white rounded-3xl p-5 sm:p-6 border border-white/10 shadow-md">
           <span className="font-mono text-[10px] uppercase text-white/50 font-bold block mb-2">
             ACTIVE FLEET CAPACITY
           </span>
           <div className="flex items-center gap-3">
-            <span className="text-5xl font-black font-mono text-atlas-lime">
+            <span className="text-4xl sm:text-5xl font-black font-mono text-atlas-lime">
               {activeCount}
             </span>
             <span className="text-xs font-mono text-white/60">
@@ -67,24 +67,24 @@ export default function WorkersPage() {
           </div>
         </div>
 
-        <div className="bg-atlas-blue text-white rounded-3xl p-6 border-2 border-black/15 shadow-md">
+        <div className="bg-atlas-blue text-white rounded-3xl p-5 sm:p-6 border-2 border-black/15 shadow-md">
           <span className="font-mono text-[10px] uppercase text-white/70 font-bold block mb-2">
             HEARTBEAT FREQUENCY
           </span>
           <div className="flex items-center gap-3">
-            <span className="text-5xl font-black font-mono text-white">10s</span>
+            <span className="text-4xl sm:text-5xl font-black font-mono text-white">10s</span>
             <span className="text-xs font-mono text-white/80">
               Lease timeout window: 30s
             </span>
           </div>
         </div>
 
-        <div className="bg-atlas-cream text-atlas-black rounded-3xl p-6 border-2 border-black/15 shadow-md">
+        <div className="bg-white text-atlas-black rounded-3xl p-5 sm:p-6 border border-black/10 shadow-sm sm:col-span-2 lg:col-span-1">
           <span className="font-mono text-[10px] uppercase text-black/50 font-bold block mb-2">
             LEASE REAPING
           </span>
           <div className="flex items-center gap-3">
-            <span className="text-5xl font-black font-mono text-emerald-700">AUTO</span>
+            <span className="text-4xl sm:text-5xl font-black font-mono text-emerald-700">AUTO</span>
             <span className="text-xs font-mono text-black/60">
               Expired leases re-queued to READY
             </span>
@@ -93,14 +93,14 @@ export default function WorkersPage() {
       </div>
 
       {/* Workers Table */}
-      <BentoCard variant="cream" className="p-6 md:p-8">
+      <BentoCard variant="white" className="p-4 sm:p-6 md:p-8">
         <div className="flex items-center justify-between pb-4 border-b border-black/15 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-atlas-black text-atlas-lime flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-atlas-black text-atlas-lime flex items-center justify-center font-bold flex-shrink-0">
               <Server size={16} />
             </div>
             <div>
-              <h2 className="font-black text-xl uppercase tracking-tight">
+              <h2 className="font-black text-lg sm:text-xl uppercase tracking-tight">
                 Registered Workers
               </h2>
               <span className="font-mono text-xs text-black/50 uppercase">
@@ -110,8 +110,8 @@ export default function WorkersPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left font-sans">
+        <div className="overflow-x-auto terminal-scrollbar -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="w-full text-left font-sans min-w-[700px]">
             <thead>
               <tr className="border-b-2 border-black/10 text-[11px] font-mono text-black/50 uppercase tracking-wider">
                 <th className="pb-3 pl-2">Status</th>

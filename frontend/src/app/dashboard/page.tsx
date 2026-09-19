@@ -51,9 +51,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Top Banner & Quick Trigger */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black uppercase tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight">
             Workflows & Executions
           </h1>
           <p className="font-mono text-xs text-black/60 uppercase tracking-wider mt-1">
@@ -61,11 +61,11 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap self-start sm:self-auto">
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-black/20 bg-white font-mono text-xs uppercase font-bold hover:bg-black/5 transition-all"
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border-2 border-black/20 bg-white font-mono text-xs uppercase font-bold hover:bg-black/5 transition-all"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             <span>Refresh</span>
@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => openTrigger()}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-atlas-black text-atlas-lime font-black text-xs uppercase tracking-wider hover:bg-atlas-blue hover:text-white transition-all shadow-md"
+            className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-atlas-black text-atlas-lime font-black text-xs uppercase tracking-wider hover:bg-atlas-blue hover:text-white transition-all shadow-md"
           >
             <Play size={14} className="fill-current" />
             <span>Trigger Run</span>
@@ -82,14 +82,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Workflows Table Card */}
-      <BentoCard variant="cream" className="p-6 md:p-8">
+      <BentoCard variant="white" className="p-4 sm:p-6 md:p-8">
         <div className="flex items-center justify-between pb-4 border-b border-black/15 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-atlas-blue text-white flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-atlas-blue text-white flex items-center justify-center font-bold flex-shrink-0">
               <Layers size={16} />
             </div>
             <div>
-              <h2 className="font-black text-xl uppercase tracking-tight">
+              <h2 className="font-black text-lg sm:text-xl uppercase tracking-tight">
                 Registered Workflows
               </h2>
               <span className="font-mono text-xs text-black/50 uppercase">
@@ -99,8 +99,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left font-sans">
+        <div className="overflow-x-auto terminal-scrollbar -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="w-full text-left font-sans min-w-[650px]">
             <thead>
               <tr className="border-b-2 border-black/10 text-[11px] font-mono text-black/50 uppercase tracking-wider">
                 <th className="pb-3 pl-2">Workflow Name</th>
@@ -152,10 +152,10 @@ export default function DashboardPage() {
       </BentoCard>
 
       {/* Recent Executions Grid */}
-      <BentoCard variant="cream" className="p-6 md:p-8">
+      <BentoCard variant="white" className="p-4 sm:p-6 md:p-8">
         <div className="flex items-center justify-between pb-4 border-b border-black/15 mb-6">
           <div>
-            <h2 className="font-black text-xl uppercase tracking-tight">
+            <h2 className="font-black text-lg sm:text-xl uppercase tracking-tight">
               Recent Execution Runs
             </h2>
             <span className="font-mono text-xs text-black/50 uppercase">

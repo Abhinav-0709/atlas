@@ -59,6 +59,27 @@
   animation: editorial-pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Custom Terminal Scrollbar */
+.terminal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.terminal-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+}
+.terminal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(216, 242, 55, 0.35);
+  border-radius: 9999px;
+}
+.terminal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(216, 242, 55, 0.75);
+}
+.terminal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 242, 55, 0.35) rgba(255, 255, 255, 0.04);
+}
+
 /* Hide scrollbar for tabs */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

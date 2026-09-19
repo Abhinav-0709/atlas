@@ -92,31 +92,31 @@ export default function RunDetailPage() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <Link
             href="/dashboard"
-            className="w-10 h-10 rounded-full bg-white border-2 border-black/20 flex items-center justify-center hover:bg-black/5 transition-colors"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-black/20 flex items-center justify-center hover:bg-black/5 transition-colors flex-shrink-0"
           >
             <ArrowLeft size={18} />
           </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight">
                 Run #{run.id.slice(0, 8)}
               </h1>
               <TaskStatusPill status={run.status} size="md" />
             </div>
-            <div className="font-mono text-xs text-black/60 mt-1">
+            <div className="font-mono text-[11px] sm:text-xs text-black/60 mt-1 truncate max-w-[260px] sm:max-w-md">
               UUID: {run.id}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap self-start sm:self-auto">
           <button
             onClick={loadRunData}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black/20 bg-white font-mono text-xs uppercase font-bold hover:bg-black/5 transition-all"
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border-2 border-black/20 bg-white font-mono text-xs uppercase font-bold hover:bg-black/5 transition-all"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             <span>Refresh</span>
@@ -126,7 +126,7 @@ export default function RunDetailPage() {
             <button
               onClick={handleCancel}
               disabled={cancelling}
-              className="flex items-center gap-2 px-5 py-2 rounded-full bg-rose-600 text-white font-black text-xs uppercase tracking-wider hover:bg-rose-700 transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-rose-600 text-white font-black text-xs uppercase tracking-wider hover:bg-rose-700 transition-all shadow-sm"
             >
               <XCircle size={14} />
               <span>{cancelling ? "Cancelling..." : "Cancel Run"}</span>
@@ -173,15 +173,17 @@ export default function RunDetailPage() {
       </div>
 
       {/* DAG Visualizer Card */}
-      <BentoCard variant="cream" className="p-6 md:p-8">
+      <BentoCard variant="white" className="p-4 sm:p-6 md:p-8">
         <div className="flex items-center justify-between pb-4 border-b border-black/15 mb-6">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">✦</span>
-            <h3 className="font-black text-xl uppercase tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-atlas-black text-atlas-lime flex items-center justify-center font-bold flex-shrink-0">
+              <Layers size={15} />
+            </div>
+            <h3 className="font-black text-lg sm:text-xl uppercase tracking-tight">
               Interactive DAG Graph Execution
             </h3>
           </div>
-          <span className="font-mono text-xs text-black/50 uppercase">
+          <span className="font-mono text-[11px] sm:text-xs text-black/50 uppercase hidden xs:inline">
             Click node to view details
           </span>
         </div>
@@ -196,7 +198,7 @@ export default function RunDetailPage() {
       {/* Task Details Drawer & Events Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Selected Task Inspection Panel */}
-        <div className="lg:col-span-6 bg-white rounded-3xl p-6 border-2 border-black/15 shadow-sm space-y-4">
+        <div className="lg:col-span-6 bg-white rounded-3xl p-4 sm:p-6 border border-black/10 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-black/10">
             <h4 className="font-black text-lg uppercase tracking-tight">
               Task Details
@@ -265,7 +267,7 @@ export default function RunDetailPage() {
         </div>
 
         {/* Audit Events Timeline */}
-        <div className="lg:col-span-6 bg-white rounded-3xl p-6 border-2 border-black/15 shadow-sm space-y-4">
+        <div className="lg:col-span-6 bg-white rounded-3xl p-4 sm:p-6 border border-black/10 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-black/10">
             <h4 className="font-black text-lg uppercase tracking-tight">
               Audit Event Stream
@@ -275,7 +277,7 @@ export default function RunDetailPage() {
             </span>
           </div>
 
-          <div className="max-h-[320px] overflow-y-auto space-y-2 pr-2">
+          <div className="max-h-[320px] overflow-y-auto terminal-scrollbar space-y-2 pr-2">
             {events.length === 0 ? (
               <div className="p-8 text-center font-mono text-xs text-black/50">
                 No events recorded for this run.

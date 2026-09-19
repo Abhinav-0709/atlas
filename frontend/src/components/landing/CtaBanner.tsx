@@ -5,10 +5,13 @@ import Link from "next/link";
 
 export default function CtaBanner() {
   return (
-    <section className="w-full bg-atlas-cream pb-16 px-6 sm:px-12 lg:px-16">
-      <div className="max-w-7xl mx-auto rounded-3xl overflow-hidden border border-atlas-black/15 shadow-md grid grid-cols-1 lg:grid-cols-12">
-        {/* Left Segment: Sky Blue */}
-        <div className="lg:col-span-4 bg-atlas-sky p-8 sm:p-12 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-atlas-black/15">
+    <section className="w-full bg-atlas-cream border-t border-atlas-black/15 overflow-hidden">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch border-b border-atlas-black/15 shadow-sm">
+        {/* Left Segment: Sky Blue - Flush to the left edge */}
+        <div className="lg:col-span-4 bg-atlas-sky p-8 sm:p-12 lg:p-16 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-atlas-black/15">
+          <p className="text-xs sm:text-sm font-mono font-bold tracking-[0.2em] text-atlas-black/60 mb-3 uppercase">
+            // GET STARTED
+          </p>
           <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter text-atlas-black leading-[1.05]">
             Ready to build
             <br />
@@ -17,7 +20,7 @@ export default function CtaBanner() {
         </div>
 
         {/* Center Segment: Acid Lime with CTA buttons */}
-        <div className="lg:col-span-5 bg-atlas-lime p-8 sm:p-12 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-atlas-black/15">
+        <div className="lg:col-span-5 bg-atlas-lime p-8 sm:p-12 lg:p-16 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-atlas-black/15">
           <p className="text-base sm:text-lg text-atlas-black/90 font-medium mb-8 max-w-md leading-relaxed">
             Get started today and turn your ideas into reliable, scalable workflows.
           </p>
@@ -30,7 +33,7 @@ export default function CtaBanner() {
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </Link>
             <Link
-              href="/dashboard"
+              href="/docs"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-atlas-lime border-2 border-atlas-black text-atlas-black text-sm font-bold hover:bg-atlas-lime-light active:scale-95 transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,8 +44,8 @@ export default function CtaBanner() {
           </div>
         </div>
 
-        {/* Right Segment: White/Cream with Editorial Typography */}
-        <div className="lg:col-span-3 bg-white p-8 sm:p-12 flex flex-col justify-between">
+        {/* Right Segment: White/Cream with Editorial Typography - Flush to the right edge */}
+        <div className="lg:col-span-3 bg-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between">
           <div className="flex justify-end">
             <span className="text-4xl font-light text-atlas-black select-none">
               ↗
