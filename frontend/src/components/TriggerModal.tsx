@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Workflow } from "@/lib/types";
 import { triggerWorkflow } from "@/lib/api";
 import { X, Play, Key, Database, Sparkles } from "lucide-react";
@@ -29,6 +29,12 @@ export default function TriggerModal({
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setWorkflowId(defaultWorkflowId || workflows[0]?.id || "");
+    }
+  }, [isOpen, defaultWorkflowId, workflows]);
 
   if (!isOpen) return null;
 
