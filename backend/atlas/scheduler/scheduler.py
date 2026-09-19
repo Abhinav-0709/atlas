@@ -6,10 +6,11 @@ from atlas.config import settings
 from atlas.db.session import get_db_context
 from atlas.db.models import WorkflowRun, TaskRun, WorkflowVersion, Task
 from atlas.db.models.enums import TaskStatus, WorkflowStatus
-from atlas.queue.task_queue import enqueue_task
+from atlas.execution.state_machine import transition_task, transition_workflow
+from atlas.observability.metrics import record_workflow_status, set_queue_depth
+from atlas.queue.task_queue import enqueue_task, get_queue_depth
 from atlas.workflow.dag import DAGDefinition
 from atlas.workflow.engine import WorkflowEngine
-from atlas.execution.state_machine import transition_task, transition_workflow
 
 
 async def find_ready_tasks():
@@ -74,6 +75,10 @@ async def find_ready_tasks():
                     ).value
                     workflow_run.completed_at = now
                     workflow_run.updated_at = now
+                    record_workflow_status(
+                        workflow_name=str(workflow_run.workflow_version_id),
+                        status=wf_status.value,
+                    )
                     await db.commit()
                     continue
             except Exception:
@@ -113,6 +118,11 @@ async def scheduler_loop():
     while True:
         try:
             await find_ready_tasks()
+            try:
+                depth = await get_queue_depth()
+                set_queue_depth(depth)
+            except Exception:
+                pass
         except Exception:
             pass
         await asyncio.sleep(1)

@@ -6,6 +6,7 @@ from atlas.db.session import get_db_context
 from atlas.db.models import TaskRun
 from atlas.db.models.enums import TaskStatus
 from atlas.execution.state_machine import transition_task
+from atlas.observability.metrics import record_expired_lease
 
 
 async def find_expired_leases():
@@ -24,6 +25,7 @@ async def find_expired_leases():
             task_run.worker_id = None
             task_run.lease_expires_at = None
             task_run.updated_at = datetime.now(timezone.utc)
+            record_expired_lease()
         
         if expired_tasks:
             await db.commit()

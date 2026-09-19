@@ -40,6 +40,10 @@ async def lifespan(app: FastAPI):
     await redis.aclose()
 
 
+from fastapi.responses import JSONResponse, Response
+from atlas.observability.metrics import CONTENT_TYPE_LATEST, get_prometheus_metrics
+from atlas.observability.middleware import CorrelationIdMiddleware
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=__version__,
@@ -48,9 +52,27 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+app.add_middleware(CorrelationIdMiddleware)
+
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
+frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
+if frontend_dir.exists():
+    app.mount("/dashboard", StaticFiles(directory=str(frontend_dir), html=True), name="dashboard")
+
 app.include_router(workflows.router)
 app.include_router(runs.router)
 app.include_router(workers.router)
+
+
+@app.get("/metrics")
+async def metrics_endpoint() -> Response:
+    """Exposes application Prometheus metrics for scraping."""
+    return Response(
+        content=get_prometheus_metrics(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 
 @app.get("/")

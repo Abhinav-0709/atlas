@@ -8,6 +8,7 @@ from atlas.db.models import Event, Task, TaskAttempt, TaskRun
 from atlas.db.models.enums import EventType, TaskStatus
 from atlas.exceptions import TaskTimeoutError
 from atlas.execution.retry_policy import RetryPolicyConfig, compute_backoff_delay, should_retry
+from atlas.observability.metrics import record_task_retry
 
 logger = logging.getLogger("atlas.retry")
 
@@ -121,6 +122,7 @@ async def handle_task_failure(
             created_at=now,
         )
         db.add(retry_event)
+        record_task_retry(task_key)
         logger.info(
             f"Task {task_key} attempt {attempt_number} failed. "
             f"Retrying in {delay_seconds:.2f}s (scheduled for {scheduled_retry_at.isoformat()})."

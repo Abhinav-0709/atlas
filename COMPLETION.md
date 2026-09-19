@@ -1,7 +1,7 @@
 # Atlas — Project State & Handover Guide (COMPLETION.md)
 
-> **Current Status**: **Phase 5 Complete (Retries, Crash Recovery & Idempotency)**. Ready for **Phase 6 (Observability, Dashboard & Containerization)**.  
-> **Target Audience**: Any engineer joining the Atlas codebase to continue implementation seamlessly.  
+> **Current Status**: **Phase 6 Complete (Observability, Dashboard & Containerization)**. **All 6 Phases Fully Built & Verified!**  
+> **Target Audience**: Any engineer joining the Atlas codebase to operate, extend, or deploy Atlas.  
 > **Key References**: [docs/IDEA.md](docs/IDEA.md), [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md), [docs/CONSTRAINTS.md](docs/CONSTRAINTS.md), [docs/AGENT(2).md](docs/AGENT(2).md).
 
 ---
@@ -10,12 +10,13 @@
 
 Atlas is a backend-heavy, distributed workflow execution engine. It is designed to orchestrate workflows represented as Directed Acyclic Graphs (DAGs) across disposable, distributed workers with lease-based recovery, explicit state machines, and durable state persistence.
 
-All **Phases 1 through 5** are now implemented, code-reviewed, and verified:
+All **Phases 1 through 6** are now completely implemented, code-reviewed, and verified:
 1. **Phase 1 (Foundation & Database)**: uv package manager, 9 SQLAlchemy models, async session, Alembic migrations.
 2. **Phase 2 (DAG Engine & State Machine)**: Pydantic DAG definitions, DFS 3-color cycle detection, dependency resolution, centralized explicit state transitions, controlled task handlers (`HTTP`, `PYTHON_FUNCTION`, `DELAY`).
 3. **Phase 3 (REST API & Redis Queue)**: Complete FastAPI routes for workflows, runs, and workers; Redis async task queue; background scheduler loop; lease reaper loop.
 4. **Phase 4 (Distributed Workers & Leasing)**: Standalone worker daemon, atomic task claiming (`UPDATE ... WHERE status='READY'`), heartbeat context renewing leases and worker liveness, task outcome persistence, and terminal workflow detection.
 5. **Phase 5 (Retries, Crash Recovery & Idempotency)**: Configurable retry policies (fixed, linear, exponential with jitter), retry scheduler (`RETRYING` vs `DEAD_LETTERED`), on-boot startup crash recovery scan for orphaned tasks and dead workers, and workflow run idempotency key enforcement.
+6. **Phase 6 (Observability, Operator Dashboard & Containerization)**: Full Prometheus metrics `/metrics`, structured JSON logging with correlation IDs, modern operator UI at `/dashboard` with live DAG visualization and worker monitoring, production multi-stage Dockerfiles, and multi-service docker-compose topology.
 
 ---
 
@@ -202,21 +203,37 @@ Phase 5 deliverables are fully built and verified:
 
 ---
 
-## 6. Next: Phase 6 (Observability, Dashboard & Containerization)
+---
 
-### Phase 6: Observability, Dashboard & Containerization
-**Goal**: Expose production metrics, build the operator UI, and package the entire distributed system.
+## 6. Phase 6 Completed: Observability, Operator Dashboard & Containerization
 
-#### What to Build:
+Phase 6 deliverables are fully built and verified:
 1. **Prometheus Metrics (`backend/atlas/observability/metrics.py`)**:
-   - Expose `/metrics` with `atlas_workflow_runs_total`, `atlas_task_runs_total`, `atlas_task_failures_total`, `atlas_queue_depth`, `atlas_active_workers`, `atlas_task_duration_seconds`.
-   - Structured JSON logging with correlation IDs (`workflow_run_id`, `task_run_id`, `worker_id`).
-2. **Next.js Dashboard (`frontend/`)**:
-   - Workflow list and trigger interface.
-   - Run details showing live DAG graph and task states.
-   - Worker fleet monitoring.
-3. **Docker Compose Orchestration (`infra/docker-compose.yml`)**:
-   - Wire API, Worker replicas, PostgreSQL, Redis, and Prometheus.
+   - Custom counters, histograms, and gauges matching specification:
+     - `atlas_workflow_runs_total`, `atlas_workflow_failures_total`
+     - `atlas_task_runs_total`, `atlas_task_failures_total`, `atlas_task_retries_total`
+     - `atlas_task_duration_seconds` (latency histogram with exponential buckets)
+     - `atlas_queue_depth` (gauge tracking Redis backlog)
+     - `atlas_active_workers` (gauge tracking healthy worker pool)
+     - `atlas_expired_leases_total` (counter tracking lease reaper recoveries)
+   - Exposed via `/metrics` endpoint with Prometheus text exposition format.
+2. **Structured JSON Logging & Trace Propagation (`backend/atlas/observability/logging.py` & `middleware.py`)**:
+   - `StructuredJsonFormatter` formatting log records as machine-readable JSON containing timestamp, level, logger, and message.
+   - `CorrelationIdMiddleware` injecting/preserving `X-Correlation-ID` header.
+   - `TraceContext` context manager propagating `workflow_id`, `workflow_run_id`, `task_run_id`, and `worker_id` across async task boundaries.
+3. **Operator Dashboard (`frontend/`)**:
+   - Rich, modern dark-mode control plane UI mounted directly at `/dashboard`:
+     - **Workflows View**: list registered workflows, view active versions, trigger runs with custom JSON context and idempotency keys.
+     - **Runs & DAG Inspector**: real-time execution polling, visual DAG flow nodes with state badges and animations, task attempt history, error displays, and chronological audit event stream.
+     - **Worker Fleet View**: live heartbeat freshness monitor, hostnames, PIDs, active status.
+     - **Metrics Tab**: live Prometheus exposition preview.
+4. **Containerization & Orchestration (`backend/Dockerfile`, `infra/`)**:
+   - Multi-stage Dockerfile based on `uv:python3.12-bookworm-slim` supporting both API and Worker processes.
+   - Complete `infra/docker-compose.yml` defining `postgres`, `redis`, `api`, `worker`, and `prometheus`.
+   - `infra/prometheus/prometheus.yml` scrape configuration targeting `api:8000/metrics`.
+5. **Automated Test Suite**:
+   - Full test suite: `74 passed, 14 skipped in 30.86s`.
+   - Static typing: `npx pyright atlas/` -> `0 errors, 0 warnings`.
 
 ---
 

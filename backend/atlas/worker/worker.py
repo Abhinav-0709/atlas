@@ -12,6 +12,8 @@ from atlas.db.session import get_db_context
 from atlas.exceptions import TaskTimeoutError
 from atlas.execution.executor import execute_task
 from atlas.execution.retry_scheduler import handle_task_failure
+from atlas.observability.logging import TraceContext
+from atlas.observability.metrics import record_task_result
 from atlas.queue.task_queue import dequeue_task
 from atlas.worker.claimer import claim_task
 from atlas.worker.heartbeat import HeartbeatManager
@@ -108,34 +110,53 @@ class AtlasWorker:
             f"Claimed task {task_key} (Attempt {attempt_number}) on worker {self.worker_name}"
         )
 
-        # 2. Fetch task definition from database
         task_def = await self._load_task_definition(task_run_id, payload)
 
-        # 3. Execute task under heartbeat supervision
-        try:
-            async with HeartbeatManager(self.worker_id, task_run_id):
-                result = await execute_task(task_def)
+        # 3. Execute task under heartbeat supervision with trace context
+        start_time = asyncio.get_event_loop().time()
+        with TraceContext(
+            workflow_run_id=str(workflow_run_id),
+            task_run_id=str(task_run_id),
+            worker_id=str(self.worker_id),
+        ):
+            try:
+                async with HeartbeatManager(self.worker_id, task_run_id):
+                    result = await execute_task(task_def)
 
-            await self._record_success(
-                task_run_id=task_run_id,
-                workflow_run_id=workflow_run_id,
-                attempt_number=attempt_number,
-                task_key=task_key,
-                result=result,
-            )
-            logger.info(f"Task {task_key} finished successfully")
-            return True
+                duration = asyncio.get_event_loop().time() - start_time
+                record_task_result(
+                    task_type=task_def.type.value,
+                    status=TaskStatus.SUCCESS.value,
+                    duration_seconds=duration,
+                )
 
-        except Exception as exc:
-            logger.exception(f"Task {task_key} failed with error: {exc}")
-            await self._record_failure(
-                task_run_id=task_run_id,
-                workflow_run_id=workflow_run_id,
-                attempt_number=attempt_number,
-                task_key=task_key,
-                exc=exc,
-            )
-            return False
+                await self._record_success(
+                    task_run_id=task_run_id,
+                    workflow_run_id=workflow_run_id,
+                    attempt_number=attempt_number,
+                    task_key=task_key,
+                    result=result,
+                )
+                logger.info(f"Task {task_key} finished successfully in {duration:.3f}s")
+                return True
+
+            except Exception as exc:
+                duration = asyncio.get_event_loop().time() - start_time
+                record_task_result(
+                    task_type=task_def.type.value,
+                    status=TaskStatus.FAILED.value,
+                    duration_seconds=duration,
+                    error_type=type(exc).__name__,
+                )
+                logger.exception(f"Task {task_key} failed with error: {exc}")
+                await self._record_failure(
+                    task_run_id=task_run_id,
+                    workflow_run_id=workflow_run_id,
+                    attempt_number=attempt_number,
+                    task_key=task_key,
+                    exc=exc,
+                )
+                return False
 
     async def _load_task_definition(
         self, task_run_id: uuid.UUID, payload: dict[str, Any]
