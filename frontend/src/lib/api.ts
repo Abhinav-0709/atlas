@@ -46,7 +46,8 @@ export async function fetchWorkflows(): Promise<Workflow[]> {
     const res = await fetch(`${API_BASE}/workflows`, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return data.length > 0 ? data : DEMO_WORKFLOWS;
+    const items = Array.isArray(data) ? data : data.items || [];
+    return items.length > 0 ? items : DEMO_WORKFLOWS;
   } catch (err) {
     console.warn("Using fallback demo workflows:", err);
     return DEMO_WORKFLOWS;
