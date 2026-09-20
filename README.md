@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/Abhinav-0709/atlas/main/docs/atlas_logo_placeholder.png" alt="Atlas Logo" width="120" />
+![alt text](frontend/public/logo.png)
 
-# ⚡ Atlas
+# Atlas
 
 ### Distributed Workflow Execution Engine
 
@@ -134,21 +134,21 @@ The engine is designed to be resilient to: worker crashes, network partitions, d
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        ATLAS API (FastAPI)                          │
 │                                                                     │
-│   ┌─────────────────┐  ┌──────────────────┐  ┌─────────────────┐   │
-│   │  /workflows     │  │  /runs           │  │  /workers       │   │
-│   │  POST, GET      │  │  GET, POST       │  │  GET            │   │
-│   └────────┬────────┘  └────────┬─────────┘  └────────┬────────┘   │
-│            │                    │                      │            │
+│   ┌─────────────────┐  ┌──────────────────┐  ┌─────────────────┐    │
+│   │  /workflows     │  │  /runs           │  │  /workers       │    │
+│   │  POST, GET      │  │  GET, POST       │  │  GET            │    │
+│   └────────┬────────┘  └────────┬─────────┘  └────────┬────────┘    │
+│            │                    │                     │             │
 │   ┌─────────────────────────────────────────────────────────────┐   │
 │   │              Background Services (Lifespan Tasks)           │   │
-│   │   ┌─────────────────────┐   ┌─────────────────────────┐    │   │
-│   │   │   Scheduler Loop    │   │   Lease Reaper Loop     │    │   │
-│   │   │ (advance DAG tasks) │   │ (reclaim dead workers)  │    │   │
-│   │   └─────────┬───────────┘   └────────────┬────────────┘    │   │
-│   └─────────────┼────────────────────────────┼─────────────────┘   │
-└─────────────────┼────────────────────────────┼─────────────────────┘
-                  │ Enqueue READY tasks         │ Scan expired leases
-                  ▼                             ▼
+│   │   ┌─────────────────────┐   ┌─────────────────────────┐     │   │
+│   │   │   Scheduler Loop    │   │   Lease Reaper Loop     │     │   │
+│   │   │ (advance DAG tasks) │   │ (reclaim dead workers)  │     │   │
+│   │   └─────────┬───────────┘   └────────────┬────────────┘     │   │
+│   └─────────────┼────────────────────────────┼───────────────── ┘   │
+└─────────────────┼────────────────────────────┼──────────────────── ─┘
+                  │ Enqueue READY tasks        │ Scan expired leases
+                  ▼                            ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    REDIS (ElastiCache)                              │
 │                  Task Queue (list-based)                            │
@@ -202,8 +202,8 @@ The engine is designed to be resilient to: worker crashes, network partitions, d
               │    └────────────┘   │   resets to READY     │
               │                     └───────────────────────┘
               │    ┌────────────┐
-  retry      │    │   FAILED   │
-  scheduled  │    └────┬───────┘
+  retry       │    │   FAILED   │
+  scheduled   │    └────┬───────┘
               │         │ attempts remain
               │    ┌────▼────────┐
               └────│  RETRYING   │  (scheduled_retry_at)
@@ -220,11 +220,11 @@ The engine is designed to be resilient to: worker crashes, network partitions, d
 
 ```
 ┌──────────────────────────── AWS Cloud ─────────────────────────────────┐
-│                                                                         │
+│                                                                        │
 │  ┌──────────────────────────────────────────────────────────────────┐  │
 │  │                    Public Internet                               │  │
 │  └────────────────────────────┬─────────────────────────────────────┘  │
-│                                │                                        │
+│                                │                                       │
 │         ┌──────────────────────┼──────────────────────┐                │
 │         ▼                      ▼                      ▼                │
 │  ┌──────────────┐   ┌──────────────────────┐  ┌─────────────────────┐  │
@@ -233,25 +233,25 @@ The engine is designed to be resilient to: worker crashes, network partitions, d
 │  │  Next.js SSR │   │                      │  │  .sbs               │  │
 │  │  Auto CI/CD  │   │  ┌────────────────┐  │  └─────────────────────┘  │
 │  └──────────────┘   │  │ atlas_api      │  │                           │
-│                      │  │ (Docker :8000) │  │                           │
+│                     │  │ (Docker :8000) │  │                           │
 │  ┌──────────────┐   │  └────────────────┘  │                           │
 │  │  AWS VPC     │   │  ┌────────────────┐  │                           │
 │  │  Private     │   │  │ infra-worker   │  │                           │
 │  │  Subnet      │   │  │ (Docker)       │  │                           │
 │  │              │   │  └────────────────┘  │                           │
 │  │  ┌─────────┐ │   │  ┌────────────────┐  │                           │
-│  │  │   RDS   │◄├───┤  │ atlas_prometheus│  │                           │
+│  │  │   RDS   │◄├───┤  │ atlas_prometheus  │                           │
 │  │  │Postgres │ │   │  │ (Docker :9090) │  │                           │
 │  │  │   :5432 │ │   │  └────────────────┘  │                           │
 │  │  └─────────┘ │   └──────────────────────┘                           │
-│  │  ┌─────────┐ │                                                       │
-│  │  │  Redis  │◄┘                                                       │
-│  │  │Elasticache                                                        │
-│  │  │   :6379 │                                                         │
-│  │  └─────────┘                                                         │
-│  └──────────────┘                                                       │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+│  │  ┌─────────┐ │                                                      │
+│  │  │  Redis  │◄┘                                                      │
+│  │  │Elasticache                                                       │
+│  │  │   :6379 │                                                        │
+│  │  └─────────┘                                                        │
+│  └──────────────┘                                                      │
+└────────────────────────────────────────────────────────────────────────┘
+````
 
 | Resource | Service | Purpose |
 |---|---|---|
@@ -690,7 +690,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-Built with ❤️ by **Abhinav**
+Built with ❤️ and coffee
 
 ⭐ Star this repo if you found it useful!
 
