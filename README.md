@@ -1,7 +1,5 @@
 <div align="center">
-
-![alt text](frontend/public/logo.png)
-
+![alt text](image.png)
 # Atlas
 
 ### Distributed Workflow Execution Engine
@@ -19,7 +17,7 @@
 
 ---
 
-🌐 **Live Demo:** [`https://main.d1abc123.amplifyapp.com`](https://main.d1abc123.amplifyapp.com) &nbsp;|&nbsp; 🔌 **API:** [`https://atlas-api.abhinav.sbs`](https://atlas-api.abhinav.sbs) &nbsp;|&nbsp; 📖 **Swagger Docs:** [`/docs`](https://atlas-api.abhinav.sbs/docs)
+🌐 **Live Demo:** [`https://main.d1xijusitagxbu.amplifyapp.com/`](https://main.d1xijusitagxbu.amplifyapp.com/) &nbsp;|&nbsp; 🔌 **API:** [`https://atlas-api.abhinav.sbs`](https://atlas-api.abhinav.sbs) &nbsp;|&nbsp; 📖 **Swagger Docs:** [`/docs`](https://atlas-api.abhinav.sbs/docs)
 
 </div>
 
