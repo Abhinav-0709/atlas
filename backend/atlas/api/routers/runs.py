@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -183,7 +184,7 @@ async def get_run_events(
 async def delete_run(
     run_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-) -> dict[str, any]:
+) -> dict[str, Any]:
     result = await db.execute(
         select(WorkflowRun).where(WorkflowRun.id == run_id)
     )
@@ -202,7 +203,7 @@ async def delete_run(
 async def cleanup_runs(
     status_filter: str | None = None,
     db: AsyncSession = Depends(get_db),
-) -> dict[str, any]:
+) -> dict[str, Any]:
     """Clean up runs (e.g. FAILED, CANCELLED, or old runs) for data maintenance."""
     query = delete(WorkflowRun)
     if status_filter:
