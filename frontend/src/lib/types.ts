@@ -18,6 +18,7 @@ export interface Workflow {
   is_active: boolean;
   active_version: number;
   tasks_count?: number;
+  tasks?: string[];
   definition?: {
     tasks: WorkflowDefinitionTask[];
   };

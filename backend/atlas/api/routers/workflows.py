@@ -75,8 +75,37 @@ async def list_workflows(
     total_result = await db.execute(select(Workflow))
     total = len(total_result.scalars().all())
 
+    items = []
+    for w in workflows:
+        wv_res = await db.execute(
+            select(WorkflowVersion)
+            .where(WorkflowVersion.workflow_id == w.id)
+            .order_by(WorkflowVersion.version.desc())
+            .limit(1)
+        )
+        wv = wv_res.scalar_one_or_none()
+        tasks_list: list[str] = []
+        version_num = 1
+        if wv:
+            version_num = wv.version
+            if wv.definition and "tasks" in wv.definition:
+                tasks_list = [t.get("name") or t.get("key", "Step") for t in wv.definition["tasks"]]
+
+        resp = WorkflowResponse(
+            id=w.id,
+            name=w.name,
+            description=w.description,
+            is_active=w.is_active,
+            active_version=version_num,
+            tasks_count=len(tasks_list),
+            tasks=tasks_list,
+            created_at=w.created_at,
+            updated_at=w.updated_at,
+        )
+        items.append(resp)
+
     return WorkflowListResponse(
-        items=[WorkflowResponse.model_validate(w) for w in workflows],
+        items=items,
         total=total,
     )
 

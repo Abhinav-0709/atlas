@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BentoCard from "@/components/BentoCard";
@@ -15,7 +15,6 @@ import {
 import { Workflow, WorkflowRun } from "@/lib/types";
 import {
   Play,
-  ArrowUpRight,
   RefreshCw,
   Layers,
   Clock,
@@ -27,41 +26,37 @@ import {
   Sparkles,
   GitBranch,
   Repeat,
-  AlertTriangle,
   ArrowRight,
-  Check,
   Globe,
   Hourglass,
-  SlidersHorizontal,
+  Search,
+  Check,
 } from "lucide-react";
 
-function getWorkflowCategory(name: string) {
-  if (name.toLowerCase().includes("order") || name.toLowerCase().includes("fulfillment")) {
+function getWorkflowMeta(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("order") || lower.includes("fulfillment")) {
     return {
-      tag: "E-Commerce & Logistics",
-      color: "bg-blue-50 text-blue-800 border-blue-200",
+      category: "E-Commerce & Logistics",
+      color: "bg-sky-50 text-sky-700 border-sky-200",
       icon: "💳",
+      defaultTasks: ["Validate Payment", "Reserve Inventory", "Notify Warehouse", "Send Confirmation"],
     };
   }
-  if (name.toLowerCase().includes("embedding") || name.toLowerCase().includes("data") || name.toLowerCase().includes("sync")) {
+  if (lower.includes("embedding") || lower.includes("data") || lower.includes("sync")) {
     return {
-      tag: "AI & Vector Sync",
-      color: "bg-emerald-50 text-emerald-800 border-emerald-200",
+      category: "AI & Vector Sync",
+      color: "bg-emerald-50 text-emerald-700 border-emerald-200",
       icon: "🧠",
+      defaultTasks: ["Fetch Corpus", "Neural Embeddings", "Commit Vector Store"],
     };
   }
   return {
-    tag: "Distributed Pipeline",
-    color: "bg-purple-50 text-purple-800 border-purple-200",
+    category: "General Pipeline",
+    color: "bg-slate-100 text-slate-700 border-slate-200",
     icon: "⚡",
+    defaultTasks: ["Validate", "Execute", "Complete"],
   };
-}
-
-function getTaskIcon(type?: string) {
-  const t = (type || "").toUpperCase();
-  if (t.includes("HTTP")) return <Globe size={11} className="text-sky-600" />;
-  if (t.includes("DELAY")) return <Hourglass size={11} className="text-amber-600" />;
-  return <Cpu size={11} className="text-emerald-600" />;
 }
 
 export default function DashboardPage() {
@@ -71,6 +66,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [cleaning, setCleaning] = useState(false);
   const [cleanMessage, setCleanMessage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "SUCCESS" | "FAILED">("ALL");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedWfId, setSelectedWfId] = useState<string | undefined>(undefined);
@@ -109,7 +105,7 @@ export default function DashboardPage() {
     setCleaning(true);
     try {
       const res = await cleanupWorkflowRuns();
-      setCleanMessage(`Cleaned ${res.cleaned_count} test execution runs.`);
+      setCleanMessage(`Purged ${res.cleaned_count} test executions.`);
       await loadData();
       setTimeout(() => setCleanMessage(null), 4000);
     } catch (err: any) {
@@ -130,6 +126,14 @@ export default function DashboardPage() {
     }
   };
 
+  const filteredWorkflows = useMemo(() => {
+    if (!searchQuery.trim()) return workflows;
+    const q = searchQuery.toLowerCase();
+    return workflows.filter(
+      (w) => w.name.toLowerCase().includes(q) || (w.description && w.description.toLowerCase().includes(q))
+    );
+  }, [workflows, searchQuery]);
+
   const filteredRuns = recentRuns.filter((r) => {
     if (statusFilter === "SUCCESS") return r.status === "SUCCESS";
     if (statusFilter === "FAILED") return r.status === "FAILED" || r.status === "CANCELLED";
@@ -137,38 +141,38 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="space-y-10">
-      {/* Top Banner & Quick Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Sleek Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-black/10">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight">
-              Workflows & Orchestration
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+              Workflows &amp; Orchestration
             </h1>
-            <span className="font-mono text-[10px] px-2.5 py-0.5 rounded-full bg-atlas-lime font-black uppercase text-atlas-black">
-              Production Ready
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+              Online
             </span>
           </div>
-          <p className="font-mono text-xs text-black/60 uppercase tracking-wider mt-1">
+          <p className="font-mono text-xs text-black/50 mt-0.5">
             Durable DAG execution engine with lease recovery, heartbeats &amp; atomic task claiming
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap self-start sm:self-auto">
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border-2 border-black/20 bg-white font-mono text-xs uppercase font-bold hover:bg-black/5 transition-all shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-black/15 bg-white font-mono text-xs font-semibold hover:bg-slate-50 transition-colors shadow-2xs"
           >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
             <span>Refresh</span>
           </button>
 
           <button
             onClick={() => openTrigger()}
-            className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-atlas-black text-atlas-lime font-black text-xs uppercase tracking-wider hover:bg-atlas-blue hover:text-white transition-all shadow-md"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 text-white font-semibold text-xs hover:bg-atlas-blue transition-colors shadow-2xs"
           >
-            <Play size={14} className="fill-current" />
+            <Play size={12} className="fill-current" />
             <span>Trigger Execution</span>
           </button>
         </div>
@@ -176,9 +180,9 @@ export default function DashboardPage() {
 
       {/* Clean Feedback Alert */}
       {cleanMessage && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-emerald-900 font-mono text-xs flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-2 font-bold">
-            <CheckCircle2 size={16} className="text-emerald-600" />
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-mono text-xs flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-2 font-medium">
+            <CheckCircle2 size={15} className="text-emerald-600" />
             <span>{cleanMessage}</span>
           </div>
           <button onClick={() => setCleanMessage(null)} className="text-emerald-700 hover:text-emerald-950 font-bold">
@@ -187,194 +191,185 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* WORKFLOW CARDS SECTION (Replacing plain table with high-end product showcase) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-atlas-blue text-white flex items-center justify-center font-bold">
-              <Layers size={15} />
-            </div>
-            <h2 className="font-black text-xl uppercase tracking-tight">
-              Registered Workflow Catalog
-            </h2>
-          </div>
-          <span className="font-mono text-xs text-black/50 uppercase">
-            {workflows.length} DAGs configured &amp; operational
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {workflows.map((wf) => {
-            const cat = getWorkflowCategory(wf.name);
-            const tasks = wf.definition?.tasks || [];
-
-            return (
-              <div
-                key={wf.id}
-                className="p-6 rounded-3xl bg-white border-2 border-black/15 shadow-sm hover:border-atlas-blue/60 transition-all flex flex-col justify-between space-y-5 group"
-              >
-                <div>
-                  {/* Category Pill & Version */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border font-mono ${cat.color}`}
-                    >
-                      <span>{cat.icon}</span>
-                      <span>{cat.tag}</span>
-                    </span>
-                    <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-atlas-black text-atlas-lime font-bold">
-                      v{wf.active_version}
-                    </span>
-                  </div>
-
-                  {/* Title & Description */}
-                  <h3 className="text-xl font-black uppercase tracking-tight text-black group-hover:text-atlas-blue transition-colors">
-                    {wf.name}
-                  </h3>
-                  <p className="text-xs text-black/70 mt-1.5 leading-relaxed line-clamp-2">
-                    {wf.description || "Distributed task orchestration pipeline with fault tolerance."}
-                  </p>
-
-                  {/* Visual Pipeline Stepper (Visual DAG Preview) */}
-                  <div className="mt-5 p-3.5 rounded-2xl bg-black/5 border border-black/10">
-                    <span className="block font-mono text-[10px] uppercase tracking-wider text-black/50 font-bold mb-2">
-                      Pipeline Architecture ({tasks.length || 3} Tasks)
-                    </span>
-                    <div className="flex items-center gap-2 overflow-x-auto terminal-scrollbar pb-1">
-                      {tasks.map((t, idx) => (
-                        <div key={t.key} className="flex items-center gap-2 flex-shrink-0">
-                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white border border-black/15 shadow-2xs font-mono text-[11px] font-bold text-black">
-                            {getTaskIcon(t.type)}
-                            <span>{t.name || t.key}</span>
-                          </div>
-                          {idx < tasks.length - 1 && (
-                            <ArrowRight size={13} className="text-black/30 flex-shrink-0" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Resilience Mechanism Badges */}
-                  <div className="mt-4 flex items-center gap-2 flex-wrap text-[10px] font-mono text-black/60 font-semibold">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/5 border border-black/10">
-                      <ShieldCheck size={11} className="text-emerald-700" />
-                      <span>30s Lease TTL</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/5 border border-black/10">
-                      <Repeat size={11} className="text-atlas-blue" />
-                      <span>Exp Backoff Jitter</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/5 border border-black/10">
-                      <Zap size={11} className="text-amber-600" />
-                      <span>Crash Auto-Recovery</span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Footer Action */}
-                <div className="pt-4 border-t border-black/10 flex items-center justify-between">
-                  <span className="font-mono text-[11px] text-black/50">
-                    ID: {wf.id.slice(0, 8)}..
-                  </span>
-                  <button
-                    onClick={() => openTrigger(wf.id)}
-                    className="flex items-center gap-2 px-5 py-2 rounded-full bg-atlas-black text-atlas-lime hover:bg-atlas-blue hover:text-white font-black text-xs uppercase tracking-wider transition-all shadow-sm"
-                  >
-                    <Play size={12} className="fill-current" />
-                    <span>Run Pipeline</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* CORE RESILIENCE & DISTRIBUTED MECHANISMS (Visual Product Proof) */}
-      <BentoCard variant="cream" className="p-6 sm:p-8 space-y-6">
-        <div>
+      {/* WORKFLOW CATALOG (High-Density, Modern List UX) */}
+      <div className="bg-white rounded-2xl border border-black/10 shadow-xs overflow-hidden">
+        {/* Table/Directory Header Bar */}
+        <div className="p-4 sm:px-6 border-b border-black/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-atlas-blue" />
-            <h2 className="font-black text-xl uppercase tracking-tight">
-              Under-The-Hood Distributed Mechanics
+            <div className="w-6 h-6 rounded-md bg-atlas-blue text-white flex items-center justify-center font-bold">
+              <Layers size={13} />
+            </div>
+            <h2 className="font-bold text-sm text-slate-900 uppercase tracking-wide">
+              Registered Workflows
             </h2>
-          </div>
-          <p className="font-mono text-xs text-black/60 mt-1 uppercase tracking-wider">
-            How Atlas guarantees fault tolerance, zero task loss, and deterministic DAG state transitions
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-white border-2 border-black/15 space-y-2 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
-              <ShieldCheck size={16} />
-            </div>
-            <h4 className="font-black text-sm uppercase tracking-tight">
-              1. Atomic Task Leasing
-            </h4>
-            <p className="text-xs text-black/70 leading-relaxed">
-              Workers claim tasks via atomic database row updates with strict TTL leases. Prevents race conditions and double executions.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border-2 border-black/15 space-y-2 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-              <Zap size={16} />
-            </div>
-            <h4 className="font-black text-sm uppercase tracking-tight">
-              2. Crash Recovery Reaper
-            </h4>
-            <p className="text-xs text-black/70 leading-relaxed">
-              If an EC2 worker node dies mid-execution, the background reaper detects the expired lease within 15s and safely re-queues the task.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border-2 border-black/15 space-y-2 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-              <GitBranch size={16} />
-            </div>
-            <h4 className="font-black text-sm uppercase tracking-tight">
-              3. Topological DAG Engine
-            </h4>
-            <p className="text-xs text-black/70 leading-relaxed">
-              Cycle-validated Directed Acyclic Graphs. Downstream tasks stay pending until all required parent nodes succeed.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border-2 border-black/15 space-y-2 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
-              <Repeat size={16} />
-            </div>
-            <h4 className="font-black text-sm uppercase tracking-tight">
-              4. Exponential Backoff
-            </h4>
-            <p className="text-xs text-black/70 leading-relaxed">
-              Configurable retries with randomized jitter to prevent thundering herd spikes on downstream external APIs.
-            </p>
-          </div>
-        </div>
-      </BentoCard>
-
-      {/* RECENT EXECUTIONS & DATA CLEANING SECTION */}
-      <BentoCard variant="white" className="p-4 sm:p-6 md:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-black/15 gap-4">
-          <div>
-            <h2 className="font-black text-lg sm:text-xl uppercase tracking-tight">
-              Execution Runs &amp; Audit Logs
-            </h2>
-            <span className="font-mono text-xs text-black/50 uppercase">
-              Click any execution to inspect live DAG state &amp; payload telemetry
+            <span className="font-mono text-xs text-black/50 ml-1">
+              ({workflows.length})
             </span>
           </div>
 
-          {/* Data Cleaning Actions & Status Filter */}
+          {/* Search filter input */}
+          <div className="relative w-full sm:w-64">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-black/40" />
+            <input
+              type="text"
+              placeholder="Filter workflows..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-black/15 bg-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-atlas-blue"
+            />
+          </div>
+        </div>
+
+        {/* Directory Items List */}
+        <div className="divide-y divide-black/5">
+          {filteredWorkflows.length === 0 ? (
+            <div className="p-8 text-center font-mono text-xs text-black/50">
+              No workflows found.
+            </div>
+          ) : (
+            filteredWorkflows.map((wf) => {
+              const meta = getWorkflowMeta(wf.name);
+              // Use real tasks list, or definition tasks, or fallback
+              const taskNames =
+                wf.tasks && wf.tasks.length > 0
+                  ? wf.tasks
+                  : wf.definition?.tasks && wf.definition.tasks.length > 0
+                  ? wf.definition.tasks.map((t) => t.name || t.key)
+                  : meta.defaultTasks;
+
+              return (
+                <div
+                  key={wf.id}
+                  className="p-4 sm:px-6 hover:bg-slate-50/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4 group"
+                >
+                  {/* Left: Workflow Identity & Description */}
+                  <div className="space-y-1 min-w-0 max-w-md">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-slate-900 group-hover:text-atlas-blue transition-colors">
+                        {wf.name}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${meta.color}`}>
+                        {meta.category}
+                      </span>
+                      <span className="font-mono text-[10px] text-black/40">
+                        v{wf.active_version || 1}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-black/60 leading-relaxed line-clamp-1">
+                      {wf.description || "Distributed DAG workflow pipeline."}
+                    </p>
+                  </div>
+
+                  {/* Middle: Sleek Step Sequence Chips (No big empty boxes!) */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto terminal-scrollbar py-1">
+                    {taskNames.map((stepName, sIdx) => (
+                      <div key={sIdx} className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="px-2 py-1 rounded-md bg-slate-100 border border-slate-200 font-mono text-[11px] text-slate-700 font-medium">
+                          {stepName}
+                        </span>
+                        {sIdx < taskNames.length - 1 && (
+                          <ArrowRight size={11} className="text-black/30 flex-shrink-0" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex items-center gap-3 self-end lg:self-center flex-shrink-0">
+                    <span className="font-mono text-[10px] text-black/40 hidden sm:inline">
+                      ID: {wf.id.slice(0, 8)}
+                    </span>
+                    <button
+                      onClick={() => openTrigger(wf.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-atlas-blue font-bold text-xs transition-colors shadow-2xs"
+                    >
+                      <Play size={11} className="fill-current" />
+                      <span>Run DAG</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* CORE RESILIENCE & DISTRIBUTED MECHANISMS (Clean & Compact) */}
+      <div className="bg-slate-50/80 rounded-2xl border border-black/10 p-5 space-y-4 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles size={15} className="text-atlas-blue" />
+            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800">
+              Distributed Execution Guarantees
+            </h3>
+          </div>
+          <span className="font-mono text-[11px] text-black/50">
+            Engine Architecture
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3.5 rounded-xl bg-white border border-black/10 space-y-1 shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+              <ShieldCheck size={14} className="text-sky-600" />
+              <span>Atomic Lease Locks</span>
+            </div>
+            <p className="text-[11px] text-black/60 leading-normal">
+              Exclusive DB worker claiming with 30s TTL prevents duplicate concurrent runs.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-white border border-black/10 space-y-1 shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+              <Zap size={14} className="text-amber-500" />
+              <span>Crash Recovery Reaper</span>
+            </div>
+            <p className="text-[11px] text-black/60 leading-normal">
+              Background reaper detects dead worker leases within 15s and cleanly re-queues.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-white border border-black/10 space-y-1 shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+              <GitBranch size={14} className="text-emerald-600" />
+              <span>Topological DAG Engine</span>
+            </div>
+            <p className="text-[11px] text-black/60 leading-normal">
+              Cycle detection guarantees downstream tasks unlock only when parents succeed.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-white border border-black/10 space-y-1 shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+              <Repeat size={14} className="text-purple-600" />
+              <span>Exponential Backoff</span>
+            </div>
+            <p className="text-[11px] text-black/60 leading-normal">
+              Jittered automatic retries eliminate thundering herd spikes on dependencies.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* RECENT EXECUTIONS & DATA CLEANING SECTION */}
+      <div className="bg-white rounded-2xl border border-black/10 shadow-xs p-5 sm:p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-black/10 gap-3">
+          <div>
+            <h2 className="font-bold text-sm uppercase tracking-wide text-slate-900">
+              Recent Execution Runs
+            </h2>
+            <span className="font-mono text-xs text-black/50">
+              Click any execution to inspect live DAG state &amp; telemetry
+            </span>
+          </div>
+
+          {/* Filter Tabs & Data Purge */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Filter Tabs */}
-            <div className="flex items-center rounded-xl bg-black/5 p-1 border border-black/10 text-xs font-mono">
+            <div className="flex items-center rounded-lg bg-black/5 p-0.5 border border-black/10 text-xs font-mono">
               <button
                 onClick={() => setStatusFilter("ALL")}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
                   statusFilter === "ALL" ? "bg-white text-black shadow-2xs" : "text-black/60 hover:text-black"
                 }`}
               >
@@ -382,7 +377,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => setStatusFilter("SUCCESS")}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
                   statusFilter === "SUCCESS" ? "bg-white text-black shadow-2xs" : "text-black/60 hover:text-black"
                 }`}
               >
@@ -390,7 +385,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => setStatusFilter("FAILED")}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
                   statusFilter === "FAILED" ? "bg-white text-black shadow-2xs" : "text-black/60 hover:text-black"
                 }`}
               >
@@ -402,17 +397,17 @@ export default function DashboardPage() {
             <button
               onClick={handleCleanFailed}
               disabled={cleaning}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 transition-colors font-mono text-xs font-bold shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 transition-colors font-mono text-xs font-bold shadow-2xs"
               title="Clean all failed test runs from database"
             >
-              <Trash2 size={13} />
-              <span>{cleaning ? "Cleaning..." : "Purge Failed"}</span>
+              <Trash2 size={12} />
+              <span>{cleaning ? "Purging..." : "Purge Failed"}</span>
             </button>
           </div>
         </div>
 
         {filteredRuns.length === 0 ? (
-          <div className="p-14 text-center font-mono text-xs uppercase text-black/50 border-2 border-dashed border-black/15 rounded-2xl space-y-2">
+          <div className="p-10 text-center font-mono text-xs text-black/50 border border-dashed border-black/15 rounded-xl space-y-2">
             <div>No executions found for this filter.</div>
             <button
               onClick={() => openTrigger()}
@@ -422,54 +417,54 @@ export default function DashboardPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredRuns.map((run) => (
               <div
                 key={run.id}
                 onClick={() => router.push(`/dashboard/runs/${run.id}`)}
-                className="cursor-pointer p-5 rounded-2xl bg-white border-2 border-black/15 hover:border-atlas-blue hover:-translate-y-1 transition-all shadow-sm flex flex-col justify-between group"
+                className="cursor-pointer p-4 rounded-xl bg-white border border-black/10 hover:border-atlas-blue hover:shadow-xs transition-all flex flex-col justify-between group select-none"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-mono text-xs font-bold text-black/70">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-xs font-bold text-slate-800">
                       RUN #{run.id.slice(0, 8)}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <TaskStatusPill status={run.status} size="sm" />
                       <button
                         onClick={(e) => handleDeleteSingle(e, run.id)}
-                        className="text-black/30 hover:text-rose-600 transition-colors p-1"
+                        className="text-black/30 hover:text-rose-600 transition-colors p-0.5"
                         title="Delete Run"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   </div>
 
                   {run.workflow_name && (
-                    <div className="text-sm font-black uppercase text-black group-hover:text-atlas-blue transition-colors mb-1 truncate">
+                    <div className="text-xs font-bold text-slate-900 group-hover:text-atlas-blue transition-colors mb-1 truncate">
                       {run.workflow_name}
                     </div>
                   )}
 
                   {run.idempotency_key && (
-                    <div className="text-[11px] font-mono text-black/50 truncate mb-2">
+                    <div className="text-[10px] font-mono text-black/45 truncate mb-1">
                       Key: {run.idempotency_key}
                     </div>
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-black/10 flex items-center justify-between font-mono text-xs text-black/60 mt-3">
+                <div className="pt-2.5 border-t border-black/5 flex items-center justify-between font-mono text-[11px] text-black/50 mt-2">
                   <span>{new Date(run.created_at).toLocaleTimeString()}</span>
-                  <span className="text-atlas-blue font-bold flex items-center gap-1 group-hover:underline">
-                    View Execution ➔
+                  <span className="text-atlas-blue font-semibold flex items-center gap-1 group-hover:underline">
+                    Inspect ➔
                   </span>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </BentoCard>
+      </div>
 
       {/* Trigger Modal */}
       <TriggerModal

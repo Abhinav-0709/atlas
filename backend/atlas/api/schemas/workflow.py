@@ -19,6 +19,9 @@ class WorkflowResponse(BaseModel):
     name: str
     description: str | None
     is_active: bool
+    active_version: int = 1
+    tasks_count: int = 0
+    tasks: list[str] = []
     created_at: datetime
     updated_at: datetime
 
