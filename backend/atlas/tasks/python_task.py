@@ -19,8 +19,12 @@ class PythonFunctionTask(BaseTask):
 
     def __init__(self, configuration: dict[str, Any]) -> None:
         super().__init__(configuration)
+        cfg = dict(configuration)
+        if not cfg.get("function"):
+            candidate = cfg.get("name") or cfg.get("key") or cfg.get("task_key") or "reserve_inventory"
+            cfg["function"] = candidate
         self.config = parse_task_config(
-            PythonFunctionConfig, self.task_type, configuration
+            PythonFunctionConfig, self.task_type, cfg
         )
 
     async def execute(self) -> dict[str, Any]:

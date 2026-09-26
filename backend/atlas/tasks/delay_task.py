@@ -16,7 +16,10 @@ class DelayTask(BaseTask):
 
     def __init__(self, configuration: dict[str, Any]) -> None:
         super().__init__(configuration)
-        self.config = parse_task_config(DelayConfig, self.task_type, configuration)
+        cfg = dict(configuration)
+        if "seconds" not in cfg or not cfg.get("seconds"):
+            cfg["seconds"] = 2.0
+        self.config = parse_task_config(DelayConfig, self.task_type, cfg)
 
     async def execute(self) -> dict[str, Any]:
         await asyncio.sleep(self.config.seconds)

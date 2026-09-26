@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from atlas.api.schemas.run import (
     RunCreate,
@@ -177,3 +177,41 @@ async def get_run_events(
     events = events_result.scalars().all()
 
     return [EventResponse.model_validate(e) for e in events]
+
+
+@router.delete("/{run_id}", status_code=status.HTTP_200_OK)
+async def delete_run(
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, any]:
+    result = await db.execute(
+        select(WorkflowRun).where(WorkflowRun.id == run_id)
+    )
+    workflow_run = result.scalar_one_or_none()
+    if not workflow_run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} not found",
+        )
+    await db.delete(workflow_run)
+    await db.commit()
+    return {"deleted": True, "id": str(run_id)}
+
+
+@router.post("/action/cleanup", status_code=status.HTTP_200_OK)
+async def cleanup_runs(
+    status_filter: str | None = None,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, any]:
+    """Clean up runs (e.g. FAILED, CANCELLED, or old runs) for data maintenance."""
+    query = delete(WorkflowRun)
+    if status_filter:
+        query = query.where(WorkflowRun.status == status_filter.upper())
+    else:
+        # Default cleanup: remove FAILED, CANCELLED
+        query = query.where(WorkflowRun.status.in_([WorkflowStatus.FAILED.value, WorkflowStatus.CANCELLED.value]))
+    
+    result = await db.execute(query)
+    await db.commit()
+    return {"cleaned_count": result.rowcount}
+

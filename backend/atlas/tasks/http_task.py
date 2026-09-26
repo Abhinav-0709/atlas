@@ -30,7 +30,10 @@ class HTTPTask(BaseTask):
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         super().__init__(configuration)
-        self.config = parse_task_config(HTTPConfig, self.task_type, configuration)
+        cfg = dict(configuration)
+        if not cfg.get("url"):
+            cfg["url"] = "https://jsonplaceholder.typicode.com/posts/1"
+        self.config = parse_task_config(HTTPConfig, self.task_type, cfg)
         self._transport = transport
 
     async def execute(self) -> dict[str, Any]:

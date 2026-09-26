@@ -1,6 +1,6 @@
 import { Workflow, WorkflowRun, Worker, AuditEvent, SystemStats } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000" || "https://atlas-api.abhinav.sbs/";
 
 // Fallback demo dataset for offline rendering or showcase
 const DEMO_WORKFLOWS: Workflow[] = [
@@ -109,6 +109,30 @@ export async function cancelWorkflowRun(runId: string): Promise<WorkflowRun> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || "Failed to cancel run");
+  }
+  return await res.json();
+}
+
+export async function deleteWorkflowRun(runId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/runs/${runId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to delete run");
+  }
+}
+
+export async function cleanupWorkflowRuns(statusFilter?: string): Promise<{ cleaned_count: number }> {
+  const url = statusFilter
+    ? `${API_BASE}/runs/action/cleanup?status_filter=${encodeURIComponent(statusFilter)}`
+    : `${API_BASE}/runs/action/cleanup`;
+  const res = await fetch(url, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to cleanup runs");
   }
   return await res.json();
 }
