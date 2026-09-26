@@ -2,7 +2,7 @@
 
 import { TaskRun } from "@/lib/types";
 import TaskStatusPill from "./TaskStatusPill";
-import { ArrowRight, CheckCircle2, Clock, Globe, Cpu, Hourglass, AlertTriangle, ShieldCheck } from "lucide-react";
+import { ArrowRight, Clock, Globe, Cpu, Hourglass, CheckCircle2 } from "lucide-react";
 
 interface DAGVisualizerProps {
   tasks: TaskRun[];
@@ -18,38 +18,12 @@ function formatTaskTitle(task: TaskRun): string {
     .join(" ");
 }
 
-function getTaskTypeBadge(type?: string | null) {
-  if (!type) return null;
+function getTaskTypeIcon(type?: string | null) {
+  if (!type) return <Cpu size={11} className="text-slate-500" />;
   const upper = type.toUpperCase();
-  if (upper.includes("HTTP")) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-mono font-bold uppercase">
-        <Globe size={10} />
-        <span>HTTP</span>
-      </span>
-    );
-  }
-  if (upper.includes("PYTHON")) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold uppercase">
-        <Cpu size={10} />
-        <span>Compute</span>
-      </span>
-    );
-  }
-  if (upper.includes("DELAY")) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-mono font-bold uppercase">
-        <Hourglass size={10} />
-        <span>Delay</span>
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-mono font-bold uppercase">
-      {type}
-    </span>
-  );
+  if (upper.includes("HTTP")) return <Globe size={11} className="text-sky-600" />;
+  if (upper.includes("DELAY")) return <Hourglass size={11} className="text-amber-600" />;
+  return <Cpu size={11} className="text-emerald-600" />;
 }
 
 function calculateDuration(startedAt?: string | null, completedAt?: string | null): string | null {
@@ -69,53 +43,58 @@ export default function DAGVisualizer({
 }: DAGVisualizerProps) {
   if (!tasks || tasks.length === 0) {
     return (
-      <div className="p-12 text-center border-2 border-dashed border-black/20 rounded-2xl bg-black/5 font-mono text-xs uppercase tracking-wider text-black/60">
+      <div className="p-8 text-center border border-dashed border-black/15 rounded-xl bg-black/5 font-mono text-xs uppercase tracking-wider text-black/50">
         No DAG nodes defined for this execution
       </div>
     );
   }
 
   return (
-    <div className="w-full overflow-x-auto terminal-scrollbar p-2 sm:p-4">
-      <div className="flex items-center gap-4 sm:gap-6 min-w-max py-3 px-1">
+    <div className="w-full overflow-x-auto terminal-scrollbar py-2">
+      <div className="flex items-center justify-center gap-2 sm:gap-3 min-w-fit mx-auto py-2 px-1">
         {tasks.map((task, idx) => {
           const isSelected = selectedTaskKey === task.task_key;
           const isRunning = task.status === "RUNNING";
+          const isSuccess = task.status === "SUCCESS";
           const duration = calculateDuration(task.started_at, task.completed_at);
           const title = formatTaskTitle(task);
 
           return (
-            <div key={task.task_key} className="flex items-center gap-4 sm:gap-6">
-              {/* Task Node Card */}
+            <div key={task.task_key} className="flex items-center gap-2 sm:gap-3">
+              {/* Compact, Professional Node Card */}
               <div
                 onClick={() => onSelectTask?.(task)}
-                className={`cursor-pointer w-64 rounded-2xl border-2 p-4 transition-all duration-200 shadow-sm relative ${
+                className={`cursor-pointer w-44 sm:w-48 rounded-xl border p-3 transition-all duration-150 shadow-2xs relative select-none ${
                   isSelected
-                    ? "bg-atlas-black text-white border-atlas-blue shadow-xl -translate-y-1 ring-2 ring-atlas-blue/30"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-atlas-blue/40 -translate-y-0.5"
                     : isRunning
-                    ? "bg-amber-50/70 border-atlas-blue ring-2 ring-atlas-blue/20 animate-pulse-subtle"
-                    : "bg-white border-black/15 hover:border-black/40 hover:-translate-y-0.5"
+                    ? "bg-amber-50/80 border-amber-400 ring-2 ring-amber-300/40 animate-pulse-subtle"
+                    : "bg-white border-black/15 hover:border-black/40 hover:-translate-y-0.5 hover:shadow-xs"
                 }`}
               >
-                {/* Top Badge Row */}
-                <div className="flex items-center justify-between mb-2.5">
+                {/* Step Index & Status Pill Header */}
+                <div className="flex items-center justify-between gap-1 mb-1.5">
                   <div className="flex items-center gap-1.5">
                     <span
-                      className={`font-mono text-[10px] tracking-wider uppercase font-bold px-1.5 py-0.5 rounded ${
-                        isSelected ? "bg-white/10 text-atlas-lime" : "bg-black/5 text-black/60"
+                      className={`w-4 h-4 rounded-full flex items-center justify-center font-mono text-[9px] font-bold ${
+                        isSelected
+                          ? "bg-white/20 text-atlas-lime"
+                          : "bg-black/5 text-black/60"
                       }`}
                     >
-                      STEP {idx + 1}
+                      {idx + 1}
                     </span>
-                    {getTaskTypeBadge(task.task_type)}
+                    <span title={task.task_type || "Compute"}>
+                      {getTaskTypeIcon(task.task_type)}
+                    </span>
                   </div>
                   <TaskStatusPill status={task.status} size="sm" />
                 </div>
 
-                {/* Friendly Title */}
+                {/* Friendly Task Name */}
                 <div
-                  className={`font-black text-sm tracking-tight mb-0.5 truncate ${
-                    isSelected ? "text-white" : "text-black"
+                  className={`font-bold text-xs truncate leading-snug ${
+                    isSelected ? "text-white" : "text-slate-900"
                   }`}
                   title={title}
                 >
@@ -124,63 +103,51 @@ export default function DAGVisualizer({
 
                 {/* Technical Key */}
                 <div
-                  className={`font-mono text-[11px] truncate mb-3 ${
-                    isSelected ? "text-atlas-lime/80" : "text-black/50"
+                  className={`font-mono text-[10px] truncate mb-2 ${
+                    isSelected ? "text-atlas-lime/80" : "text-black/45"
                   }`}
                   title={task.task_key}
                 >
                   {task.task_key}
                 </div>
 
-                {/* Bottom Meta Row */}
+                {/* Bottom Footer (Duration + Worker snippet) */}
                 <div
-                  className={`flex items-center justify-between text-[11px] font-mono pt-2.5 border-t ${
-                    isSelected
-                      ? "border-white/15 text-white/70"
-                      : "border-black/10 text-black/60"
+                  className={`flex items-center justify-between text-[10px] font-mono pt-1.5 border-t ${
+                    isSelected ? "border-white/15 text-white/70" : "border-black/10 text-black/50"
                   }`}
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div>
                     {duration ? (
                       <span className="flex items-center gap-1 font-semibold">
-                        <Clock size={12} className={isSelected ? "text-atlas-lime" : "text-black/60"} />
+                        <Clock size={10} className={isSelected ? "text-atlas-lime" : "text-black/50"} />
                         <span>{duration}</span>
                       </span>
                     ) : isRunning ? (
-                      <span className="flex items-center gap-1 text-atlas-blue font-bold animate-pulse">
-                        <Clock size={12} />
-                        <span>Running</span>
-                      </span>
+                      <span className="text-amber-500 font-bold animate-pulse">Running</span>
                     ) : (
-                      <span>Att: {task.current_attempt || 1}</span>
+                      <span>Att {task.current_attempt || 1}</span>
                     )}
                   </div>
 
                   {task.worker_id ? (
                     <span
-                      className={`truncate max-w-[95px] text-[10px] px-1.5 py-0.5 rounded ${
-                        isSelected ? "bg-white/10 text-white/90" : "bg-black/5 text-black/70"
+                      className={`truncate max-w-[65px] px-1 py-0.2 rounded text-[9px] ${
+                        isSelected ? "bg-white/10 text-white/90" : "bg-black/5 text-black/60"
                       }`}
-                      title={`Worker: ${task.worker_id}`}
                     >
-                      w/{task.worker_id.slice(0, 6)}
+                      w/{task.worker_id.slice(0, 4)}
                     </span>
                   ) : (
-                    <span className="text-[10px] text-black/40">queued</span>
+                    <span className="text-black/30 text-[9px]">queued</span>
                   )}
                 </div>
-
-                {task.error_message && (
-                  <div className="mt-2.5 text-[10px] font-mono text-rose-600 bg-rose-50 p-2 rounded-lg border border-rose-200 line-clamp-2">
-                    ⚠ {task.error_message}
-                  </div>
-                )}
               </div>
 
-              {/* Edge Arrow to Next Node */}
+              {/* Minimalist Edge Connector */}
               {idx < tasks.length - 1 && (
-                <div className="flex flex-col items-center justify-center text-black/30">
-                  <ArrowRight size={22} className="stroke-[2.5]" />
+                <div className="flex items-center justify-center text-black/25 flex-shrink-0">
+                  <ArrowRight size={15} className="stroke-[2]" />
                 </div>
               )}
             </div>

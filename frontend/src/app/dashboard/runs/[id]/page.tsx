@@ -301,7 +301,7 @@ export default function RunDetailPage() {
 
       {/* Interactive DAG Visualizer Card */}
       <BentoCard variant="white" className="p-4 sm:p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-black/15 mb-6 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-black/15 mb-4 gap-2">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-atlas-black text-atlas-lime flex items-center justify-center font-bold flex-shrink-0">
               <Layers size={15} />
@@ -316,15 +316,17 @@ export default function RunDetailPage() {
             </div>
           </div>
           <span className="font-mono text-[11px] text-black/60 bg-black/5 px-2.5 py-1 rounded-full self-start sm:self-auto">
-            {run.tasks?.length || 0} Sequential Steps
+            {run.tasks?.length || 0} Steps
           </span>
         </div>
 
-        <DAGVisualizer
-          tasks={run.tasks || []}
-          selectedTaskKey={selectedTask?.task_key}
-          onSelectTask={(t) => setSelectedTask(t)}
-        />
+        <div className="bg-slate-50/80 border border-black/10 rounded-2xl p-4 sm:p-6 flex items-center justify-center">
+          <DAGVisualizer
+            tasks={run.tasks || []}
+            selectedTaskKey={selectedTask?.task_key}
+            onSelectTask={(t) => setSelectedTask(t)}
+          />
+        </div>
       </BentoCard>
 
       {/* Task Details & Audit Events Grid */}
