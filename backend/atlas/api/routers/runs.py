@@ -41,9 +41,55 @@ async def get_run(
     )
     task_runs = task_runs_result.scalars().all()
 
+    # Look up workflow version and workflow
+    wv_res = await db.execute(
+        select(WorkflowVersion, Workflow)
+        .join(Workflow, Workflow.id == WorkflowVersion.workflow_id)
+        .where(WorkflowVersion.id == workflow_run.workflow_version_id)
+    )
+    wv_row = wv_res.first()
+    wf_name = None
+    wf_desc = None
+    task_meta_map: dict[str, dict[str, str | None]] = {}
+    if wv_row:
+        wv, wf = wv_row
+        wf_name = wf.name
+        wf_desc = wf.description
+        if wv.definition and "tasks" in wv.definition:
+            for t_def in wv.definition["tasks"]:
+                task_meta_map[t_def.get("key", "")] = {
+                    "name": t_def.get("name"),
+                    "type": t_def.get("type"),
+                }
+
+    tasks_out = []
+    for t in task_runs:
+        meta = task_meta_map.get(t.task_key, {})
+        t_resp = TaskRunResponse(
+            id=t.id,
+            workflow_run_id=t.workflow_run_id,
+            task_key=t.task_key,
+            task_name=meta.get("name") or t.task_key,
+            task_type=meta.get("type"),
+            status=t.status,
+            worker_id=t.worker_id,
+            scheduled_retry_at=t.scheduled_retry_at,
+            current_attempt=t.current_attempt,
+            attempt_count=t.current_attempt,
+            started_at=t.started_at,
+            completed_at=t.completed_at,
+            input_data=t.input_data,
+            output_data=t.output_data,
+            error_message=t.error_message,
+            created_at=t.created_at,
+        )
+        tasks_out.append(t_resp)
+
     return RunDetailResponse(
         id=workflow_run.id,
         workflow_version_id=workflow_run.workflow_version_id,
+        workflow_name=wf_name,
+        workflow_description=wf_desc,
         status=workflow_run.status,
         idempotency_key=workflow_run.idempotency_key,
         context_data=workflow_run.context_data,
@@ -51,7 +97,7 @@ async def get_run(
         completed_at=workflow_run.completed_at,
         created_at=workflow_run.created_at,
         updated_at=workflow_run.updated_at,
-        tasks=[TaskRunResponse.model_validate(t) for t in task_runs],
+        tasks=tasks_out,
     )
 
 

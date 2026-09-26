@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -156,11 +157,13 @@ async def start_workflow_run(
         if existing_run:
             return RunResponse.model_validate(existing_run)
 
+    now = datetime.now(timezone.utc)
     workflow_run = WorkflowRun(
         workflow_version_id=workflow_version.id,
         status=WorkflowStatus.RUNNING.value,
         idempotency_key=run_in.idempotency_key,
         context_data=run_in.context_data,
+        started_at=now,
     )
     db.add(workflow_run)
     await db.flush()

@@ -29,6 +29,8 @@ export interface TaskRun {
   id: string;
   workflow_run_id: string;
   task_key: string;
+  task_name?: string | null;
+  task_type?: string | null;
   status: TaskStatus;
   worker_id?: string | null;
   scheduled_retry_at?: string | null;
@@ -36,12 +38,15 @@ export interface TaskRun {
   started_at?: string | null;
   completed_at?: string | null;
   error_message?: string | null;
+  input_data?: Record<string, any> | null;
   output_data?: Record<string, any> | null;
 }
 
 export interface WorkflowRun {
   id: string;
   workflow_version_id: string;
+  workflow_name?: string | null;
+  workflow_description?: string | null;
   status: WorkflowStatus;
   idempotency_key?: string | null;
   context_data: Record<string, any>;

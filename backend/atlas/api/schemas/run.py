@@ -31,6 +31,8 @@ class TaskRunResponse(BaseModel):
     id: uuid.UUID
     workflow_run_id: uuid.UUID
     task_key: str
+    task_name: str | None = None
+    task_type: str | None = None
     status: str
     worker_id: uuid.UUID | None = None
     scheduled_retry_at: datetime | None = None
@@ -38,6 +40,9 @@ class TaskRunResponse(BaseModel):
     attempt_count: int = Field(default=0, validation_alias="current_attempt")
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    input_data: dict[str, Any] | None = None
+    output_data: dict[str, Any] | None = None
+    error_message: str | None = None
     created_at: datetime
 
 
@@ -59,6 +64,8 @@ class RunDetailResponse(BaseModel):
 
     id: uuid.UUID
     workflow_version_id: uuid.UUID
+    workflow_name: str | None = None
+    workflow_description: str | None = None
     status: str
     idempotency_key: str | None
     context_data: dict[str, Any]
