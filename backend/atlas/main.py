@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from atlas import __version__
-from atlas.api.routers import workflows, runs, workers
+from atlas.api.routers import workflows, runs, workers, ml
 from atlas.config import settings
 from atlas.db.session import get_db
 from atlas.queue.client import get_redis_pool
@@ -74,6 +74,7 @@ if legacy_dir.exists():
 app.include_router(workflows.router)
 app.include_router(runs.router)
 app.include_router(workers.router)
+app.include_router(ml.router)
 
 
 @app.get("/metrics")

@@ -86,3 +86,35 @@ export interface SystemStats {
   activeRuns: number;
   engineOnline: boolean;
 }
+
+export interface WorkerRanking {
+  worker_id: string;
+  worker_name: string;
+  total_score: number;
+  predicted_runtime_sec: number;
+  failure_probability_pct: number;
+  is_anomalous: boolean;
+  reasons: string[];
+}
+
+export interface MLPredictResponse {
+  status: string;
+  job_type: string;
+  selected_worker: string | null;
+  rankings: WorkerRanking[];
+}
+
+export interface PolicyBenchmarkMetrics {
+  avg_latency_sec: number;
+  p50_latency_sec: number;
+  p95_latency_sec: number;
+  failure_rate_pct: number;
+  throughput_tasks_per_sec: number;
+  successful_tasks: number;
+  failed_tasks: number;
+}
+
+export interface MLBenchmarkResponse {
+  workload: string;
+  policies: Record<string, PolicyBenchmarkMetrics>;
+}

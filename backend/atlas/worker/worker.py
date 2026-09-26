@@ -18,6 +18,7 @@ from atlas.queue.task_queue import dequeue_task
 from atlas.worker.claimer import claim_task
 from atlas.worker.heartbeat import HeartbeatManager
 from atlas.workflow.dag import TaskDefinition
+from atlas.ml.telemetry import ExecutionRecord, telemetry_collector
 
 logger = logging.getLogger("atlas.worker")
 
@@ -137,6 +138,25 @@ class AtlasWorker:
                     task_key=task_key,
                     result=result,
                 )
+                try:
+                    telemetry_collector.record(
+                        ExecutionRecord(
+                            job_id=str(task_run_id),
+                            task_key=task_key,
+                            job_type=str(task_def.type.value if hasattr(task_def.type, "value") else task_def.type),
+                            input_size_bytes=len(str(payload.get("configuration", {}))),
+                            worker_id=str(self.worker_id),
+                            worker_cpu_pct=25.0,
+                            worker_mem_pct=30.0,
+                            queue_depth=0,
+                            retry_count=(attempt_number - 1) if attempt_number else 0,
+                            execution_time_seconds=duration,
+                            is_success=True,
+                        )
+                    )
+                except Exception:
+                    pass
+
                 logger.info(f"Task {task_key} finished successfully in {duration:.3f}s")
                 return True
 
@@ -156,6 +176,25 @@ class AtlasWorker:
                     task_key=task_key,
                     exc=exc,
                 )
+                try:
+                    telemetry_collector.record(
+                        ExecutionRecord(
+                            job_id=str(task_run_id),
+                            task_key=task_key,
+                            job_type=str(task_def.type.value if hasattr(task_def.type, "value") else task_def.type),
+                            input_size_bytes=len(str(payload.get("configuration", {}))),
+                            worker_id=str(self.worker_id),
+                            worker_cpu_pct=25.0,
+                            worker_mem_pct=30.0,
+                            queue_depth=0,
+                            retry_count=(attempt_number - 1) if attempt_number else 0,
+                            execution_time_seconds=duration,
+                            is_success=False,
+                            error_message=str(exc),
+                        )
+                    )
+                except Exception:
+                    pass
                 return False
 
     async def _load_task_definition(

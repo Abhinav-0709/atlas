@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Layers, Activity, Server, ArrowLeft, Menu, X, BookOpen } from "lucide-react";
+import { Layers, Activity, Server, ArrowLeft, Menu, X, BookOpen, Brain } from "lucide-react";
 
 interface NavbarProps {
   engineOnline?: boolean;
@@ -23,6 +23,7 @@ export default function Navbar({
   const links = [
     { label: "Overview", href: "/", icon: ArrowLeft },
     { label: "Workflows", href: "/dashboard", icon: Layers },
+    { label: "ML Engine", href: "/dashboard/intelligence", icon: Brain },
     { label: "Workers", href: "/dashboard/workers", icon: Server },
     { label: "Metrics", href: "/dashboard/metrics", icon: Activity },
     { label: "Docs", href: "/docs", icon: BookOpen },

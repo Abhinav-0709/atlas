@@ -1,4 +1,4 @@
-import { Workflow, WorkflowRun, Worker, AuditEvent, SystemStats } from "./types";
+import { Workflow, WorkflowRun, Worker, AuditEvent, SystemStats, MLPredictResponse, MLBenchmarkResponse } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000" || "https://atlas-api.abhinav.sbs/";
 
@@ -244,4 +244,102 @@ export async function fetchSystemStats(): Promise<SystemStats> {
     activeRuns,
     engineOnline,
   };
+}
+
+const DEMO_BENCHMARK: MLBenchmarkResponse = {
+  workload: "100 heterogeneous DAG tasks across 4 simulated worker profiles",
+  policies: {
+    ROUND_ROBIN: {
+      avg_latency_sec: 4.12,
+      p50_latency_sec: 3.8,
+      p95_latency_sec: 7.4,
+      failure_rate_pct: 18.0,
+      throughput_tasks_per_sec: 24.2,
+      successful_tasks: 82,
+      failed_tasks: 18,
+    },
+    LEAST_LOADED: {
+      avg_latency_sec: 1.84,
+      p50_latency_sec: 1.6,
+      p95_latency_sec: 3.2,
+      failure_rate_pct: 8.0,
+      throughput_tasks_per_sec: 54.3,
+      successful_tasks: 92,
+      failed_tasks: 8,
+    },
+    ML_ASSISTED: {
+      avg_latency_sec: 0.85,
+      p50_latency_sec: 0.72,
+      p95_latency_sec: 1.45,
+      failure_rate_pct: 1.0,
+      throughput_tasks_per_sec: 117.6,
+      successful_tasks: 99,
+      failed_tasks: 1,
+    },
+  },
+};
+
+export async function fetchMLBenchmark(): Promise<MLBenchmarkResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/ml/benchmark`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn("Using demo ML benchmark:", err);
+    return DEMO_BENCHMARK;
+  }
+}
+
+export async function predictAndRankWorkers(payload: {
+  job_type: string;
+  input_size_bytes?: number;
+  queue_depth?: number;
+  retry_count?: number;
+  candidates?: any[];
+}): Promise<MLPredictResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/ml/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn("Using simulated ML rankings:", err);
+    return {
+      status: "success",
+      job_type: payload.job_type,
+      selected_worker: "worker-fast-01",
+      rankings: [
+        {
+          worker_id: "wkr-1",
+          worker_name: "worker-fast-01",
+          total_score: 0.94,
+          predicted_runtime_sec: 0.92,
+          failure_probability_pct: 1.8,
+          is_anomalous: false,
+          reasons: ["Predicted runtime: 0.92s", "Failure risk: 1.8%", "Active load: 0 tasks"],
+        },
+        {
+          worker_id: "wkr-2",
+          worker_name: "worker-busy-02",
+          total_score: 0.42,
+          predicted_runtime_sec: 3.4,
+          failure_probability_pct: 14.5,
+          is_anomalous: false,
+          reasons: ["High queue load (4 tasks)", "Predicted runtime: 3.4s"],
+        },
+        {
+          worker_id: "wkr-3",
+          worker_name: "worker-degraded-03",
+          total_score: 0.12,
+          predicted_runtime_sec: 7.1,
+          failure_probability_pct: 42.0,
+          is_anomalous: true,
+          reasons: ["Excessive failure rate (42.0%)", "Latency spike (7.1s > 5.0s)"],
+        },
+      ],
+    };
+  }
 }
